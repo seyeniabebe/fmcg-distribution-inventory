@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FMCG Distribution Inventory, Agent Sales &amp; Debtor Management System</title>
+  <meta name="description" content="Full-stack FMCG Distribution Inventory, Agent Sales and Debtor Management System for Ethiopian FMCG distributors." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            odoo: {
+              plum: '#714B67',
+              plumDark: '#5A3B52',
+              plumLight: '#F4EFF2',
+              teal: '#017E84',
+              tealHover: '#016469',
+              tealLight: '#E6F4F4'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; color: #0F172A; overflow-x: hidden; }
+    .spreadsheet-grid th, .spreadsheet-grid td { border: 1px solid #E2E8F0; }
+    .spreadsheet-header { background-color: #F1F5F9; color: #475569; font-weight: 600; font-size: 0.75rem; user-select: none; }
+    .cell-selected { outline: 2px solid #017E84; outline-offset: -2px; background-color: #F0FDFA !important; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #F1F5F9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+    #login-overlay { background: linear-gradient(135deg, #1e1b4b 0%, #714B67 50%, #017E84 100%); }
+    .login-card { backdrop-filter: blur(16px); background: rgba(255,255,255,0.97); }
+    .shake { animation: shake 0.4s ease; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ==================== LOGIN OVERLAY ==================== -->
+  <div id="login-overlay" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="login-card rounded-2xl shadow-2xl border border-white/30 w-full max-w-sm overflow-hidden">
+      <!-- Header -->
+      <div class="bg-odoo-plum px-6 py-5 text-white text-center">
+        <div class="w-14 h-14 rounded-xl bg-white/15 flex items-center justify-center mx-auto mb-3 border border-white/20 text-xl font-bold">DMS</div>
+        <h1 class="text-lg font-bold tracking-tight">FMCG Distribution &amp; Sales</h1>
+        <p class="text-xs text-white/70 mt-0.5">Inventory · Agent Sales · Debtors</p>
+      </div>
+      <!-- Form -->
+      <form id="login-form" class="px-6 py-6 space-y-4">
+        <div>
+          <label for="login-username" class="block text-xs font-semibold text-slate-700 mb-1.5">Username</label>
+          <input id="login-username" type="text" autocomplete="username" placeholder="e.g. admin or dawit"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-odoo-teal focus:border-odoo-teal transition" />
+        </div>
+        <div>
+          <label for="login-password" class="block text-xs font-semibold text-slate-700 mb-1.5">Password</label>
+          <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-odoo-teal focus:border-odoo-teal transition" />
+        </div>
+        <div id="login-error" class="hidden text-xs text-rose-600 font-medium bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></div>
+        <button id="login-submit" type="submit"
+          class="w-full bg-odoo-plum hover:bg-odoo-plumDark text-white font-semibold py-2.5 rounded-xl shadow-sm transition text-sm">
+          Sign In
+        </button>
+        <div class="text-center text-[11px] text-slate-400 pt-1">
+          <span class="font-medium text-slate-600">Accounts:</span> admin/admin123 · dawit/dawit123 · selam/selam123 · biniyam/biniyam123
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN APP (hidden until logged in) ==================== -->
+  <div id="app-shell" class="hidden flex flex-col min-h-screen">
+
+    <!-- TOP APP BAR -->
+    <header class="bg-odoo-plum text-white shadow-sm sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center font-bold text-xs tracking-wider shrink-0 border border-white/20">DMS</div>
+          <div class="truncate">
+            <div class="flex items-center gap-2">
+              <span class="font-semibold text-sm sm:text-base tracking-tight">FMCG Distribution &amp; Sales</span>
+              <span id="active-role-badge" class="hidden xl:inline-block text-[11px] bg-emerald-500/25 border border-emerald-300/40 text-emerald-100 px-2 py-0.5 rounded-full font-medium">Admin HQ Mode</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center: View Switcher Tabs -->
+        <nav id="main-nav" class="flex items-center bg-black/20 p-1 rounded-lg text-xs font-medium overflow-x-auto custom-scrollbar" aria-label="Main Views">
+          <button id="tab-dashboard" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 bg-white text-odoo-plum font-semibold shadow-sm whitespace-nowrap admin-only" data-view="dashboard">
+            <span>Dashboard</span>
+          </button>
+          <button id="tab-agent" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap" data-view="agent">
+            <span>Agent Sales Portal</span>
+          </button>
+          <button id="tab-debtors" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap admin-only" data-view="debtors">
+            <span>Debtors &amp; Credit</span>
+            <span id="nav-debtor-count" class="ml-0.5 px-1.5 py-0.2 bg-amber-500 text-slate-950 font-bold rounded text-[10px]">0</span>
+          </button>
+          <button id="tab-records" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap admin-only" data-view="records">
+            <span>Inventory Records</span>
+            <span id="nav-record-count" class="ml-0.5 px-1.5 py-0.2 bg-white/20 text-white rounded text-[10px]">0</span>
+          </button>
+          <button id="tab-spreadsheet" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap admin-only" data-view="spreadsheet">
+            <span>Pivot Grid</span>
+          </button>
+        </nav>
+
+        <!-- Right: User info + actions -->
+        <div class="hidden md:flex items-center gap-1.5 shrink-0">
+          <span id="header-user-info" class="text-xs text-white/80 font-medium px-2 py-1 rounded bg-white/10"></span>
+          <button id="btn-switch-role" type="button" class="admin-only px-2.5 py-1.5 rounded-md bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-semibold transition flex items-center gap-1 shadow-xs">
+            <span id="role-toggle-label">Switch to Agent View</span>
+          </button>
+          <button id="btn-open-stock-in" type="button" class="admin-only px-2.5 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition flex items-center gap-1 shadow-xs">
+            <span>+ Factory Stock In</span>
+          </button>
+          <button id="btn-open-add-sku" type="button" class="admin-only px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-xs font-medium transition flex items-center gap-1">
+            <span>+ New SKU</span>
+          </button>
+          <button id="btn-create-agent" type="button" class="admin-only px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-xs font-medium transition flex items-center gap-1">
+            <span>+ New Agent</span>
+          </button>
+          <button id="btn-logout" type="button" class="px-2.5 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition">
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- GLOBAL SEARCH / FILTER BAR -->
+    <section class="bg-white border-b border-slate-200 shadow-xs sticky top-14 z-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div class="flex-1 flex flex-wrap items-center gap-1.5 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-odoo-teal focus-within:border-odoo-teal">
+            <span class="text-[11px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-odoo-plumLight text-odoo-plum font-semibold shrink-0">SearchModel</span>
+            <div id="active-facet-pills" class="flex flex-wrap items-center gap-1"></div>
+            <input id="filter-search" type="text" placeholder="Filter by SKU, product, variant size, factory, or customer..." class="flex-1 min-w-[160px] bg-transparent text-xs sm:text-sm text-slate-800 focus:outline-none" />
+            <button id="btn-reset-filters" type="button" class="text-xs text-slate-500 hover:text-rose-600 font-medium px-1.5 py-0.5 rounded transition hidden">Reset</button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="filter-category" aria-label="Filter by Category" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-odoo-teal admin-only">
+              <option value="all">Category: All Products</option>
+              <option value="Diapers">Diapers</option>
+              <option value="Sanitary Pads">Sanitary Pads</option>
+              <option value="Wet Wipes">Wet Wipes</option>
+              <option value="Tissue Paper">Tissue Paper</option>
+            </select>
+            <select id="filter-status" aria-label="Filter by Stock Status" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-odoo-teal admin-only">
+              <option value="all">Health: All Stock</option>
+              <option value="In Stock">In Stock</option>
+              <option value="Low Stock">Low Stock</option>
+              <option value="Out of Stock">Out of Stock</option>
+            </select>
+            <button id="btn-export-csv" type="button" class="admin-only px-2.5 py-1.5 border border-slate-300 hover:bg-slate-100 rounded-lg text-xs font-medium text-slate-700 transition flex items-center gap-1">
+              <span>CSV</span>
+            </button>
+          </div>
+        </div>
+        <div id="drilldown-banner" class="hidden mt-2.5 pt-2.5 border-t border-slate-200 flex items-center justify-between gap-2 bg-odoo-tealLight/60 px-3 py-1.5 rounded-lg">
+          <div class="flex items-center gap-2 text-xs text-odoo-teal font-medium">
+            <span id="drilldown-text">Active Drill-Down</span>
+          </div>
+          <button id="btn-clear-drilldown" type="button" class="text-xs font-semibold text-odoo-teal hover:underline">Clear &times;</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+      <!-- ==================== VIEW 1: ADMIN DASHBOARD ==================== -->
+      <div id="view-dashboard" class="space-y-6">
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="space-y-0.5">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-odoo-plum"></span>
+              <h1 class="text-sm font-semibold text-slate-900">Admin HQ Dashboard: Warehouse Valuation, Agent Sales &amp; Net Profit</h1>
+            </div>
+            <p class="text-xs text-slate-600">Tracks factory buy price vs. wholesale sell price across all product variants. Every sale logged in the <strong>Agent Sales Portal</strong> automatically deducts stock and updates realized profit.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <button id="btn-go-agent-portal" type="button" class="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-semibold transition">Open Agent Sales Portal &rarr;</button>
+            <button id="btn-reset-layout" type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-medium text-slate-600 transition">Reset Layout</button>
+          </div>
+        </div>
+        <div id="kpi-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        <div id="admin-profit-strip" class="grid grid-cols-1 md:grid-cols-4 gap-4"></div>
+
+        <!-- Monthly Profit Trend Graph (Admin Only) -->
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                <h2 class="text-sm font-semibold text-slate-900">Monthly Net Realized Profit &amp; Revenue Trend</h2>
+                <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Admin Finance Analytics</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Month-by-month profit realization calculated from (Unit Sell Price − Unit Buy Price) × Quantity Sold</p>
+            </div>
+            <div class="flex items-center gap-3 text-xs">
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded bg-emerald-600 inline-block"></span>
+                <span class="text-slate-600 font-medium">Net Profit (ETB)</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded bg-[#714B67] inline-block"></span>
+                <span class="text-slate-600 font-medium">Gross Revenue (ETB)</span>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 p-3 bg-slate-50 rounded-lg border border-slate-100 text-xs">
+            <div>
+              <span class="text-slate-500 block text-[11px]">All-Time Realized Profit</span>
+              <span id="chart-monthly-total-profit" class="text-base font-bold font-mono text-emerald-700">ETB 0</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[11px]">Highest Month Profit</span>
+              <span id="chart-monthly-peak-month" class="text-base font-bold font-mono text-slate-800">—</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[11px]">Average Monthly Profit</span>
+              <span id="chart-monthly-avg-profit" class="text-base font-bold font-mono text-odoo-teal">ETB 0</span>
+            </div>
+          </div>
+          <div class="relative h-72 w-full">
+            <canvas id="canvas-monthly-profit"></canvas>
+          </div>
+        </div>
+
+        <div id="chart-grid" class="grid grid-cols-1 lg:grid-cols-12 gap-5"></div>
+
+        <!-- Profit Breakdown Table -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <div class="px-5 py-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 class="text-sm font-semibold text-slate-900">Profit Breakdown by Product &amp; Variant (Admin Only)</h2>
+              <p class="text-xs text-slate-500">Factory Buy Price vs. Agent Sell Price &mdash; buy prices hidden from field agents</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200" id="admin-overall-margin-badge">Avg Margin: —</span>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th class="py-2.5 px-4">SKU</th>
+                  <th class="py-2.5 px-4">Product &amp; Variant</th>
+                  <th class="py-2.5 px-4">Category</th>
+                  <th class="py-2.5 px-4 text-right">Buy Price</th>
+                  <th class="py-2.5 px-4 text-right">Sell Price</th>
+                  <th class="py-2.5 px-4 text-right">Profit / Unit</th>
+                  <th class="py-2.5 px-4 text-right">Margin %</th>
+                  <th class="py-2.5 px-4 text-right">Units Sold</th>
+                  <th class="py-2.5 px-4 text-right">Realized Profit</th>
+                </tr>
+              </thead>
+              <tbody id="admin-profit-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Replenishment Queue -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between gap-2">
+            <div>
+              <h2 class="text-sm font-semibold text-slate-800">Priority Factory Replenishment Queue</h2>
+              <p class="text-xs text-slate-500">Low &amp; Out of Stock Variants</p>
+            </div>
+            <button id="btn-view-all-records" type="button" class="text-xs font-semibold text-odoo-teal hover:underline">Open Full List &rarr;</button>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th class="py-2.5 px-4">SKU</th>
+                  <th class="py-2.5 px-4">Product &amp; Variant</th>
+                  <th class="py-2.5 px-4">Warehouse</th>
+                  <th class="py-2.5 px-4 text-right">On Hand</th>
+                  <th class="py-2.5 px-4 text-right">Reorder Min</th>
+                  <th class="py-2.5 px-4">Status</th>
+                  <th class="py-2.5 px-4 text-right">Quick Action</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-replenish-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW 2: FIELD AGENT PORTAL ==================== -->
+      <div id="view-agent" class="hidden space-y-6">
+        <div class="bg-gradient-to-r from-odoo-teal to-teal-700 text-white rounded-xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-white/20 text-[11px] font-semibold uppercase tracking-wider">Field Agent Portal</span>
+              <span class="text-xs text-teal-100">Buy prices &amp; profit margins are hidden</span>
+            </div>
+            <h2 class="text-lg font-bold">Daily Van &amp; Shop Sales Entry</h2>
+            <p class="text-xs text-teal-100">Log sales to shops and supermarkets. Every sale automatically deducts from warehouse stock.</p>
+          </div>
+          <div class="flex items-center gap-3 bg-black/20 p-3 rounded-xl border border-white/15">
+            <div>
+              <label for="active-agent-select" class="block text-[11px] text-teal-100 font-medium admin-only">Logging as Agent:</label>
+              <!-- For admin: dropdown of agents. For agent: read-only own name. -->
+              <select id="active-agent-select" class="mt-0.5 bg-white text-slate-900 rounded-lg px-3 py-1.5 text-xs font-semibold focus:outline-none admin-only"></select>
+              <div id="agent-readonly-name" class="hidden mt-0.5 text-white font-semibold text-sm px-1"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="agent-kpi-strip" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Log a Sale Form -->
+          <div class="lg:col-span-5 bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+            <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-semibold">Record New Shop / Supermarket Sale</h3>
+                <p class="text-[11px] text-slate-300">Automatically deducts from warehouse stock</p>
+              </div>
+              <span class="text-xs font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded">Auto Stock-Out</span>
+            </div>
+            <form id="form-agent-sale" class="p-5 space-y-4 text-xs sm:text-sm">
+              <div>
+                <label for="sale-customer-select" class="block font-medium text-slate-700 mb-1">Shop / Supermarket Customer</label>
+                <select id="sale-customer-select" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-odoo-teal">
+                  <option value="Shoa Supermarket (Bole)|0911-234-567|Bole Medhanialem">Shoa Supermarket (Bole) — 0911-234-567</option>
+                  <option value="Queens Supermarket (CMC)|0911-876-543|CMC Michael">Queens Supermarket (CMC) — 0911-876-543</option>
+                  <option value="Abebe Wholesale &amp; Mini Market|0912-345-678|Merkato Gojam Berenda">Abebe Wholesale &amp; Mini Market — 0912-345-678</option>
+                  <option value="Safeway Supermarket (Megenagna)|0913-456-789|Megenagna Square">Safeway Supermarket (Megenagna) — 0913-456-789</option>
+                  <option value="Selam Family Pharmacy &amp; Mart|0914-567-890|Piassa Churchill Rd">Selam Family Pharmacy &amp; Mart — 0914-567-890</option>
+                  <option value="CUSTOM">+ Enter a New Shop / Supermarket...</option>
+                </select>
+              </div>
+              <div id="custom-customer-fields" class="hidden space-y-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <div>
+                  <label for="sale-custom-name" class="block text-xs font-medium text-slate-700 mb-1">Shop / Supermarket Name</label>
+                  <input id="sale-custom-name" type="text" placeholder="e.g., Edna Mall Mini Mart" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs" />
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label for="sale-custom-phone" class="block text-xs font-medium text-slate-700 mb-1">Contact Phone</label>
+                    <input id="sale-custom-phone" type="text" placeholder="0911-000-000" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-mono" />
+                  </div>
+                  <div>
+                    <label for="sale-custom-area" class="block text-xs font-medium text-slate-700 mb-1">Location / Route</label>
+                    <input id="sale-custom-area" type="text" placeholder="Bole / Kazanchis" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs" />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label for="sale-sku-select" class="block font-medium text-slate-700 mb-1">Product &amp; Variant</label>
+                <select id="sale-sku-select" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-odoo-teal"></select>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="sale-qty" class="block font-medium text-slate-700 mb-1">Quantity (Cartons/Bales)</label>
+                  <input id="sale-qty" type="number" min="1" value="5" required class="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-odoo-teal" />
+                </div>
+                <div>
+                  <label for="sale-unit-price" class="block font-medium text-slate-700 mb-1">Unit Sell Price (ETB)</label>
+                  <input id="sale-unit-price" type="number" readonly class="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 font-mono text-slate-700" />
+                </div>
+              </div>
+              <div>
+                <label class="block font-medium text-slate-700 mb-1.5">How Was It Paid?</label>
+                <div class="grid grid-cols-3 gap-2">
+                  <label class="cursor-pointer">
+                    <input type="radio" name="sale-payment-method" value="CASH" checked class="peer sr-only" />
+                    <div class="text-center py-2 px-2 rounded-lg border border-slate-300 peer-checked:border-emerald-600 peer-checked:bg-emerald-50 peer-checked:text-emerald-800 font-semibold text-xs transition">Cash</div>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="sale-payment-method" value="MOBILE_BANKING" class="peer sr-only" />
+                    <div class="text-center py-2 px-2 rounded-lg border border-slate-300 peer-checked:border-odoo-teal peer-checked:bg-odoo-tealLight peer-checked:text-odoo-teal font-semibold text-xs transition">Mobile Banking</div>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="sale-payment-method" value="CREDIT" class="peer sr-only" />
+                    <div class="text-center py-2 px-2 rounded-lg border border-slate-300 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-900 font-semibold text-xs transition">Credit (Debtor)</div>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label for="sale-payment-ref" class="block text-xs font-medium text-slate-600 mb-1">Payment Reference / Note</label>
+                <input id="sale-payment-ref" type="text" placeholder="Paid in cash on delivery" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs" />
+              </div>
+
+              <!-- Mobile Banking Payment Screenshot Section -->
+              <div id="mobile-banking-screenshot-section" class="hidden space-y-2 p-3.5 bg-sky-50 rounded-xl border border-sky-200">
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-semibold text-sky-950">Mobile Banking Payment Slip / Screenshot</label>
+                  <span class="text-[10px] font-semibold text-sky-700 bg-sky-100 px-2 py-0.5 rounded">For Bank Cross-Check</span>
+                </div>
+                <p class="text-[11px] text-sky-800">Attach customer's Telebirr, CBE Birr, or Bank Transfer receipt screenshot so Admin can cross-check with bank statements.</p>
+                <div class="relative border-2 border-dashed border-sky-300 rounded-lg p-3 text-center bg-white hover:bg-sky-50/50 transition cursor-pointer" id="screenshot-drop-area">
+                  <input id="sale-screenshot-input" type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                  <div id="screenshot-upload-prompt" class="space-y-1 py-1">
+                    <div class="text-xs font-bold text-sky-700">📷 Click or Drop Transfer Slip Screenshot</div>
+                    <div class="text-[10px] text-slate-400">PNG, JPG, JPEG, WebP (Max 10MB)</div>
+                  </div>
+                  <div id="screenshot-preview-container" class="hidden items-center justify-between gap-2 text-left">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <img id="screenshot-preview-img" src="" alt="Slip" class="w-10 h-10 object-cover rounded border border-slate-200 shrink-0" />
+                      <div class="truncate">
+                        <div id="screenshot-preview-name" class="text-xs font-semibold text-slate-800 truncate">slip.png</div>
+                        <div class="text-[10px] text-emerald-600 font-medium">✓ Uploaded &amp; attached for cross-check</div>
+                      </div>
+                    </div>
+                    <button id="btn-remove-screenshot" type="button" class="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-1 rounded hover:bg-rose-50 transition shrink-0">Remove</button>
+                  </div>
+                </div>
+                <input type="hidden" id="sale-screenshot-path" value="" />
+              </div>
+
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-center justify-between">
+                <div>
+                  <span class="text-xs text-slate-500 block">Total Sale Amount</span>
+                  <span id="sale-stock-warning" class="text-[11px] text-emerald-600 font-medium">Select a product</span>
+                </div>
+                <div id="sale-total-preview" class="text-lg font-bold font-mono text-slate-900">ETB 0</div>
+              </div>
+              <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-odoo-teal hover:bg-odoo-tealHover text-white font-semibold text-sm shadow-sm transition">
+                Submit Sale &amp; Deduct Warehouse Stock
+              </button>
+            </form>
+          </div>
+
+          <!-- Right: Sales Log + Price Sheet -->
+          <div class="lg:col-span-7 space-y-5">
+            <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+              <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm font-semibold text-slate-900">Daily Sales &amp; Payment Log</h3>
+                  <p class="text-xs text-slate-500">Every sale has been deducted from warehouse inventory</p>
+                </div>
+                <span id="agent-sales-count-badge" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">0 Sales</span>
+              </div>
+              <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      <th class="py-2.5 px-3">Date / Time</th>
+                      <th class="py-2.5 px-3">Shop / Customer</th>
+                      <th class="py-2.5 px-3">Product Variant</th>
+                      <th class="py-2.5 px-3 text-right">Qty</th>
+                      <th class="py-2.5 px-3 text-right">Total (ETB)</th>
+                      <th class="py-2.5 px-3">Payment</th>
+                      <th class="py-2.5 px-3">Bank Slip / Receipt</th>
+                      <th class="py-2.5 px-3">Agent</th>
+                    </tr>
+                  </thead>
+                  <tbody id="agent-sales-tbody" class="divide-y divide-slate-100 text-xs"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Agent Wholesale Price Sheet -->
+            <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+              <div class="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Agent Wholesale Price &amp; Available Warehouse Stock</h3>
+                <span class="text-[11px] text-slate-400">Buy prices hidden for field agents</span>
+              </div>
+              <div class="overflow-x-auto custom-scrollbar max-h-60">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-[11px] text-slate-500">
+                      <th class="py-2 px-3">SKU</th>
+                      <th class="py-2 px-3">Product</th>
+                      <th class="py-2 px-3">Size / Variant</th>
+                      <th class="py-2 px-3 text-right">Wholesale Sell Price</th>
+                      <th class="py-2 px-3 text-right">Available Stock</th>
+                    </tr>
+                  </thead>
+                  <tbody id="agent-price-sheet-tbody" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW 3: DEBTORS ==================== -->
+      <div id="view-debtors" class="hidden space-y-6">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold text-xs">Accounts Receivable</span>
+              <h2 class="text-base font-bold text-slate-900">Customer Credit &amp; Debtor Follow-Up Tracker</h2>
+            </div>
+            <p class="text-xs text-slate-600 mt-1">Lists all shops and supermarkets that bought on <strong>Credit</strong>. Click <strong>Mark Cleared</strong> once the customer pays.</p>
+          </div>
+          <div class="flex items-center gap-4 shrink-0 bg-amber-50 border border-amber-200 px-4 py-2.5 rounded-xl">
+            <div>
+              <span class="text-[11px] uppercase tracking-wider text-amber-800 font-semibold block">Total Outstanding Credit</span>
+              <span id="debtors-total-outstanding" class="text-lg font-bold font-mono text-amber-900">ETB 0</span>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-slate-900">Credit Sales &amp; Debtor Directory</h3>
+            <div class="flex items-center gap-2 text-xs">
+              <label for="debtor-filter-status" class="text-slate-500 font-medium">Show:</label>
+              <select id="debtor-filter-status" class="border border-slate-300 rounded-lg px-2.5 py-1 bg-white font-medium text-slate-700">
+                <option value="unpaid">Unpaid Credit Balances Only</option>
+                <option value="all">All Credit History</option>
+              </select>
+            </div>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th class="py-3 px-4">Customer / Shop</th>
+                  <th class="py-3 px-4">Contact Phone &amp; Area</th>
+                  <th class="py-3 px-4">Items Bought on Credit</th>
+                  <th class="py-3 px-4">Sales Agent</th>
+                  <th class="py-3 px-4">Date &amp; Note</th>
+                  <th class="py-3 px-4 text-right">Amount Owed</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-right">Follow-Up Action</th>
+                </tr>
+              </thead>
+              <tbody id="debtors-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW 4: PIVOT SPREADSHEET ==================== -->
+      <div id="view-spreadsheet" class="hidden space-y-4">
+        <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <div class="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-odoo-teal text-white font-mono text-xs font-semibold">pivot</span>
+              <h2 class="text-sm font-semibold text-slate-800">Live Distribution Pivot Grid (Warehouse &times; Category)</h2>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <label for="pivot-measure" class="text-slate-500 font-medium">Measure:</label>
+              <select id="pivot-measure" class="bg-white border border-slate-300 rounded px-2 py-1 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-odoo-teal">
+                <option value="valuation">Buy Valuation (ETB)</option>
+                <option value="potentialProfit">Potential Profit (ETB)</option>
+                <option value="onHand">Qty On Hand</option>
+                <option value="count">SKU Count</option>
+              </select>
+            </div>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full border-collapse spreadsheet-grid text-xs font-mono">
+              <thead id="spreadsheet-thead"></thead>
+              <tbody id="spreadsheet-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW 5: INVENTORY RECORDS ==================== -->
+      <div id="view-records" class="hidden space-y-6">
+        <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-base font-semibold text-slate-900">Product Catalog, Variants &amp; Warehouse Stock</h2>
+                <span id="records-subtitle-badge" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium">Loading…</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Multi-size Diaper variants, single-variant Sanitary Pads, Wet Wipes, and Tissue Paper.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <label for="records-groupby" class="text-xs text-slate-500 font-medium">Group By:</label>
+              <select id="records-groupby" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-odoo-teal">
+                <option value="category">Product Category</option>
+                <option value="none">Flat List</option>
+              </select>
+              <button id="btn-records-stock-in" type="button" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition">+ Factory Stock In</button>
+              <button id="btn-records-add-sku" type="button" class="px-3 py-1.5 rounded-lg bg-odoo-plum hover:bg-odoo-plumDark text-white text-xs font-medium transition">+ New SKU</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th class="py-3 px-3">SKU</th>
+                  <th class="py-3 px-3">Product &amp; Variant</th>
+                  <th class="py-3 px-3">Category</th>
+                  <th class="py-3 px-3">Warehouse</th>
+                  <th class="py-3 px-3 text-right">Buy Price</th>
+                  <th class="py-3 px-3 text-right">Sell Price</th>
+                  <th class="py-3 px-3 text-right">Unit Profit</th>
+                  <th class="py-3 px-3 text-right">On Hand</th>
+                  <th class="py-3 px-3 text-right">Buy Valuation</th>
+                  <th class="py-3 px-3">Health</th>
+                  <th class="py-3 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="records-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Stock Movements Ledger -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900">Warehouse Stock In / Out Movement Ledger</h3>
+              <p class="text-xs text-slate-500">Audit trail of factory deliveries (IN) and automatic deductions from agent sales (OUT)</p>
+            </div>
+            <span id="stock-movements-count" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">0 Movements</span>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar max-h-72">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th class="py-2.5 px-4">Timestamp</th>
+                  <th class="py-2.5 px-4">Movement Type</th>
+                  <th class="py-2.5 px-4">SKU &amp; Variant</th>
+                  <th class="py-2.5 px-4 text-right">Quantity</th>
+                  <th class="py-2.5 px-4">Warehouse</th>
+                  <th class="py-2.5 px-4">Reference</th>
+                </tr>
+              </thead>
+              <tbody id="stock-movements-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- end app-shell -->
+
+  <!-- ==================== MODAL: ADD NEW SKU ==================== -->
+  <div id="modal-add-sku" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden">
+      <div class="px-5 py-4 bg-odoo-plum text-white flex items-center justify-between">
+        <h3 class="text-sm font-semibold">Register Product / Variant in Catalog</h3>
+        <button id="btn-close-sku-modal" type="button" class="text-white/80 hover:text-white text-lg leading-none">&times;</button>
+      </div>
+      <form id="form-add-sku" class="p-5 space-y-3.5 text-xs sm:text-sm">
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label for="sku-code" class="block font-medium text-slate-700 mb-1">SKU Code</label>
+            <input id="sku-code" type="text" required placeholder="DIA-S6" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+          </div>
+          <div class="col-span-2">
+            <label for="sku-name" class="block font-medium text-slate-700 mb-1">Product Line Name</label>
+            <input id="sku-name" type="text" required placeholder="ComfortDry Baby Diapers" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="sku-category" class="block font-medium text-slate-700 mb-1">Category</label>
+            <select id="sku-category" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white">
+              <option value="Diapers">Diapers</option>
+              <option value="Sanitary Pads">Sanitary Pads</option>
+              <option value="Wet Wipes">Wet Wipes</option>
+              <option value="Tissue Paper">Tissue Paper</option>
+            </select>
+          </div>
+          <div>
+            <label for="sku-variant" class="block font-medium text-slate-700 mb-1">Variant / Size</label>
+            <input id="sku-variant" type="text" required placeholder="Size 6 (XL)" value="Single Variant" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
+          </div>
+        </div>
+        <div>
+          <label for="sku-supplier" class="block font-medium text-slate-700 mb-1">Factory Supplier</label>
+          <input id="sku-supplier" type="text" value="Addis Hygiene Factory" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
+        </div>
+        <div class="grid grid-cols-4 gap-2.5">
+          <div>
+            <label for="sku-cost" class="block font-medium text-slate-700 mb-1">Buy Price</label>
+            <input id="sku-cost" type="number" min="1" required value="500" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+          </div>
+          <div>
+            <label for="sku-sell" class="block font-medium text-slate-700 mb-1">Sell Price</label>
+            <input id="sku-sell" type="number" min="1" required value="630" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+          </div>
+          <div>
+            <label for="sku-onhand" class="block font-medium text-slate-700 mb-1">Initial Stock</label>
+            <input id="sku-onhand" type="number" min="0" required value="40" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+          </div>
+          <div>
+            <label for="sku-min" class="block font-medium text-slate-700 mb-1">Reorder Min</label>
+            <input id="sku-min" type="number" min="1" required value="15" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+          </div>
+        </div>
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btn-cancel-sku" type="button" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-odoo-plum text-white font-semibold hover:bg-odoo-plumDark">Save SKU</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: FACTORY STOCK IN ==================== -->
+  <div id="modal-stock-in" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden">
+      <div class="px-5 py-4 bg-emerald-700 text-white flex items-center justify-between">
+        <h3 class="text-sm font-semibold">Receive Factory Stock Into Main Warehouse (Stock In)</h3>
+        <button id="btn-close-stock-in" type="button" class="text-white/80 hover:text-white text-lg leading-none">&times;</button>
+      </div>
+      <form id="form-stock-in" class="p-5 space-y-4 text-xs sm:text-sm">
+        <div>
+          <label for="stockin-sku" class="block font-medium text-slate-700 mb-1">Select Product Variant</label>
+          <select id="stockin-sku" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-medium text-slate-800"></select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="stockin-qty" class="block font-medium text-slate-700 mb-1">Quantity Received</label>
+            <input id="stockin-qty" type="number" min="1" value="50" required class="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono font-bold" />
+          </div>
+          <div>
+            <label for="stockin-factory" class="block font-medium text-slate-700 mb-1">Factory / Batch Note</label>
+            <input id="stockin-factory" type="text" value="Factory Batch #2026-10" required class="w-full border border-slate-300 rounded-lg px-3 py-2" />
+          </div>
+        </div>
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btn-cancel-stock-in" type="button" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-500">Log Factory Receipt</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CREATE AGENT ACCOUNT ==================== -->
+  <div id="modal-create-agent" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden">
+      <div class="px-5 py-4 bg-odoo-teal text-white flex items-center justify-between">
+        <h3 class="text-sm font-semibold">Create New Field Agent Account</h3>
+        <button id="btn-close-create-agent" type="button" class="text-white/80 hover:text-white text-lg leading-none">&times;</button>
+      </div>
+      <form id="form-create-agent" class="p-5 space-y-3.5 text-xs sm:text-sm">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="agent-username" class="block font-medium text-slate-700 mb-1">Username</label>
+            <input id="agent-username" type="text" required placeholder="e.g. yonas" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+          </div>
+          <div>
+            <label for="agent-password" class="block font-medium text-slate-700 mb-1">Password</label>
+            <input id="agent-password" type="text" required placeholder="e.g. yonas123" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+          </div>
+        </div>
+        <div>
+          <label for="agent-fullname" class="block font-medium text-slate-700 mb-1">Full Name</label>
+          <input id="agent-fullname" type="text" required placeholder="e.g. Yonas Tesfaye" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
+        </div>
+        <div>
+          <label for="agent-route" class="block font-medium text-slate-700 mb-1">Route / Territory</label>
+          <input id="agent-route" type="text" placeholder="e.g. Gerji &amp; Ayat Route" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
+        </div>
+        <div id="create-agent-error" class="hidden text-xs text-rose-600 font-medium bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></div>
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btn-cancel-create-agent" type="button" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-odoo-teal text-white font-semibold hover:bg-odoo-tealHover">Create Agent Account</button>
+        </div>
+      </form>
+    </div>
+  <!-- ==================== MODAL: RECEIPT & BANK STATEMENT CROSS-CHECK ==================== -->
+  <div id="modal-receipt-preview" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+          <h3 class="text-sm font-semibold">Mobile Banking Payment Slip &amp; Bank Cross-Check</h3>
+        </div>
+        <button id="btn-close-receipt-modal" type="button" class="text-white/80 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+      <div class="p-5 overflow-y-auto custom-scrollbar space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Image preview -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center min-h-[280px]">
+            <img id="receipt-modal-img" src="" alt="Payment Receipt" class="max-h-64 w-auto object-contain rounded-lg shadow-sm border border-slate-200" />
+            <div class="mt-2.5 text-center">
+              <a id="receipt-modal-fullsize" href="#" target="_blank" class="text-xs font-semibold text-odoo-teal hover:underline inline-flex items-center gap-1">
+                <span>↗ Open Full Resolution Image</span>
+              </a>
+            </div>
+          </div>
+          <!-- Reconcile details card -->
+          <div class="space-y-3 text-xs">
+            <div class="p-3 bg-sky-50 border border-sky-100 rounded-xl">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-sky-800 block mb-0.5">Bank Statement Cross-Check</span>
+              <p class="text-[11px] text-sky-700">Reconcile transaction reference and customer account against your CBE / Telebirr statement.</p>
+            </div>
+            <div class="space-y-2 divide-y divide-slate-100">
+              <div class="pt-1 flex items-center justify-between">
+                <span class="text-slate-500">Customer / Shop:</span>
+                <span id="receipt-modal-customer" class="font-semibold text-slate-800 text-right">—</span>
+              </div>
+              <div class="pt-1.5 flex items-center justify-between">
+                <span class="text-slate-500">Phone / Route:</span>
+                <span id="receipt-modal-phone" class="font-mono text-slate-700 text-right">—</span>
+              </div>
+              <div class="pt-1.5 flex items-center justify-between">
+                <span class="text-slate-500">Total Amount:</span>
+                <span id="receipt-modal-amount" class="font-mono font-bold text-slate-950 text-sm text-right">—</span>
+              </div>
+              <div class="pt-1.5 flex items-center justify-between">
+                <span class="text-slate-500">Txn Ref Code:</span>
+                <span id="receipt-modal-ref" class="font-mono font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded text-right">—</span>
+              </div>
+              <div class="pt-1.5 flex items-center justify-between">
+                <span class="text-slate-500">Date &amp; Time:</span>
+                <span id="receipt-modal-date" class="font-mono text-slate-600 text-right">—</span>
+              </div>
+              <div class="pt-1.5 flex items-center justify-between">
+                <span class="text-slate-500">Logging Agent:</span>
+                <span id="receipt-modal-agent" class="font-medium text-slate-800 text-right">—</span>
+              </div>
+              <div class="pt-1.5 flex items-center justify-between">
+                <span class="text-slate-500">Product Sold:</span>
+                <span id="receipt-modal-product" class="text-slate-800 text-right truncate max-w-[150px]">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end shrink-0">
+        <button id="btn-done-receipt-modal" type="button" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition">
+          Close Window
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: ATTACH PAYMENT SCREENSHOT ==================== -->
+  <div id="modal-attach-receipt" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden">
+      <div class="px-5 py-3.5 bg-odoo-teal text-white flex items-center justify-between">
+        <h3 class="text-sm font-semibold">Attach Mobile Banking Transfer Screenshot</h3>
+        <button id="btn-close-attach-modal" type="button" class="text-white/80 hover:text-white text-lg leading-none">&times;</button>
+      </div>
+      <form id="form-attach-receipt" class="p-5 space-y-3.5 text-xs sm:text-sm">
+        <p class="text-xs text-slate-600">Select payment transfer screenshot or receipt photo for transaction <span id="attach-modal-sale-info" class="font-semibold text-slate-900"></span>.</p>
+        <input type="hidden" id="attach-modal-sale-id" />
+        <div class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:bg-slate-50 cursor-pointer relative">
+          <input id="attach-modal-file-input" type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" required />
+          <div id="attach-modal-prompt">
+            <div class="text-odoo-teal font-semibold">📷 Choose or drop screenshot file</div>
+            <div class="text-[11px] text-slate-400 mt-1">PNG, JPG, WebP</div>
+          </div>
+          <div id="attach-modal-preview" class="hidden text-xs text-emerald-700 font-semibold">File selected</div>
+        </div>
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btn-cancel-attach" type="button" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+          <button type="submit" id="btn-submit-attach" class="px-4 py-2 rounded-lg bg-odoo-teal text-white font-semibold hover:bg-odoo-tealHover">Upload &amp; Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: DELETE SKU CONFIRMATION (Admin Only) ==================== -->
+  <div id="modal-delete-sku" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden">
+      <div class="px-5 py-4 bg-rose-600 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">⚠️</span>
+          <h3 class="text-sm font-semibold">Confirm SKU Removal (Admin Action)</h3>
+        </div>
+        <button id="btn-close-delete-modal" type="button" class="text-white/80 hover:text-white text-lg leading-none">&times;</button>
+      </div>
+      <div class="p-5 space-y-3.5 text-xs sm:text-sm">
+        <p class="text-slate-700">Are you sure you want to permanently remove SKU <strong id="delete-sku-code" class="font-mono text-rose-700"></strong> (<span id="delete-sku-name" class="font-medium text-slate-900"></span>) from the central warehouse catalog?</p>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900 space-y-1">
+          <div class="font-semibold">Important Notes:</div>
+          <div>• Stock on hand will be removed for this SKU.</div>
+          <div>• Historical sales records will remain preserved for monthly accounting and audit reports.</div>
+        </div>
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btn-cancel-delete" type="button" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+          <button id="btn-confirm-delete-sku" type="button" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-xs">Remove SKU</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 hidden">
+    <div class="bg-slate-900 text-white px-4 py-2.5 rounded-lg shadow-lg text-xs font-medium flex items-center gap-2 border border-slate-700">
+      <span id="toast-dot" class="w-2 h-2 rounded-full bg-odoo-teal"></span>
+      <span id="toast-message">Updated</span>
+    </div>
+  </div>
+
+  <!-- ==================== APPLICATION LOGIC ==================== -->
+  <script>
+  (() => {
+    'use strict';
+
+    // ── State ──
+    const state = {
+      session: null,       // { username, fullName, role, routeName }
+      variants: [],        // from /api/variants
+      sales: [],           // from /api/sales
+      movements: [],       // from /api/movements
+      agentList: [],       // from /api/auth/agents (admin only)
+      activeView: 'dashboard',
+      searchModel: { search: '', category: 'all', status: 'all', drillDown: null },
+      recordsGroupBy: 'category',
+      pivotMeasure: 'valuation',
+      chartInstances: {}
+    };
+
+    // ── Utilities ──
+
+    function fmt(val) { return 'ETB ' + Number(val || 0).toLocaleString('en-US'); }
+    function num(val) { return Number(val || 0).toLocaleString('en-US'); }
+
+    function showToast(msg, isError = false) {
+      const container = document.getElementById('toast-container');
+      document.getElementById('toast-message').textContent = msg;
+      document.getElementById('toast-dot').className = `w-2 h-2 rounded-full ${isError ? 'bg-rose-500' : 'bg-odoo-teal'}`;
+      container.classList.remove('hidden');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => container.classList.add('hidden'), 3000);
+    }
+
+    // ── API helpers ──
+
+    async function api(method, path, body) {
+      const opts = {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin'
+      };
+      if (body !== undefined) opts.body = JSON.stringify(body);
+      const res = await fetch(path, opts);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    }
+
+    const API = {
+      login: (u, p)   => api('POST', '/api/auth/login', { username: u, password: p }),
+      logout: ()       => api('POST', '/api/auth/logout'),
+      me: ()           => api('GET',  '/api/auth/me'),
+      agents: ()       => api('GET',  '/api/auth/agents'),
+      createAgent: (d) => api('POST', '/api/auth/create-agent', d),
+      variants: ()     => api('GET',  '/api/variants'),
+      createVariant:(v)=> api('POST', '/api/variants', v),
+      deleteVariant:(sku)=> api('DELETE', `/api/variants/${encodeURIComponent(sku)}`),
+      stockIn: (sku,q,n)=>api('POST', `/api/variants/${encodeURIComponent(sku)}/stock-in`, { quantity: q, note: n }),
+      sales: ()        => api('GET',  '/api/sales'),
+      recordSale: (d)  => api('POST', '/api/sales', d),
+      clearCredit:(id) => api('POST', `/api/sales/${id}/clear-credit`, { note: 'Settled via Admin' }),
+      movements: ()    => api('GET',  '/api/movements'),
+      monthlyProfit: () => api('GET', '/api/analytics/monthly-profit'),
+      uploadScreenshot: async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/sales/upload-screenshot', {
+          method: 'POST',
+          body: formData,
+          credentials: 'same-origin'
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        return data;
+      },
+      attachScreenshot: (id, path) => api('POST', `/api/sales/${id}/screenshot`, { screenshotPath: path }),
+    };
+
+    // ── Auth ──
+
+    async function doLogin(username, password) {
+      const errEl = document.getElementById('login-error');
+      errEl.classList.add('hidden');
+      try {
+        const user = await API.login(username, password);
+        state.session = user;
+        document.getElementById('login-overlay').classList.add('hidden');
+        document.getElementById('app-shell').classList.remove('hidden');
+        document.getElementById('app-shell').classList.add('flex');
+        await afterLogin();
+      } catch (e) {
+        errEl.textContent = e.message || 'Login failed';
+        errEl.classList.remove('hidden');
+        document.getElementById('login-form').classList.add('shake');
+        setTimeout(() => document.getElementById('login-form').classList.remove('shake'), 500);
+      }
+    }
+
+    async function doLogout() {
+      try { await API.logout(); } catch (_) {}
+      state.session = null;
+      state.variants = []; state.sales = []; state.movements = []; state.agentList = [];
+      document.getElementById('app-shell').classList.add('hidden');
+      document.getElementById('app-shell').classList.remove('flex');
+      document.getElementById('login-overlay').classList.remove('hidden');
+      document.getElementById('login-username').value = '';
+      document.getElementById('login-password').value = '';
+    }
+
+    async function afterLogin() {
+      applyRoleUI();
+      await refreshAll();
+      // Switch view based on role
+      if (state.session.role === 'AGENT') {
+        switchView('agent');
+      } else {
+        switchView('dashboard');
+      }
+    }
+
+    function applyRoleUI() {
+      const isAdmin = state.session?.role === 'ADMIN';
+      // Show/hide admin-only elements
+      document.querySelectorAll('.admin-only').forEach(el => {
+        el.style.display = isAdmin ? '' : 'none';
+      });
+      document.getElementById('header-user-info').textContent =
+        `${state.session.fullName} (${state.session.role === 'ADMIN' ? 'Admin' : 'Agent'})`;
+
+      const roleBadge = document.getElementById('active-role-badge');
+      if (roleBadge) {
+        if (isAdmin) {
+          roleBadge.textContent = 'Admin HQ Mode';
+          roleBadge.className = 'hidden xl:inline-block text-[11px] bg-emerald-500/25 border border-emerald-300/40 text-emerald-100 px-2 py-0.5 rounded-full font-medium';
+        } else {
+          roleBadge.textContent = 'Field Agent Mode';
+          roleBadge.className = 'hidden xl:inline-block text-[11px] bg-amber-400/25 border border-amber-300/40 text-amber-100 px-2 py-0.5 rounded-full font-medium';
+        }
+      }
+    }
+
+    // ── Data refresh ──
+
+    async function refreshAll() {
+      try {
+        [state.variants, state.sales] = await Promise.all([API.variants(), API.sales()]);
+        if (state.session?.role === 'ADMIN') {
+          [state.movements, state.agentList] = await Promise.all([API.movements(), API.agents()]);
+          populateAgentDropdown();
+        }
+        renderAll();
+      } catch (e) {
+        showToast('Error loading data: ' + e.message, true);
+      }
+    }
+
+    function populateAgentDropdown() {
+      const sel = document.getElementById('active-agent-select');
+      sel.innerHTML = '';
+      state.agentList.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.fullName;
+        opt.textContent = `${a.fullName} (${a.routeName || 'No Route'})`;
+        sel.appendChild(opt);
+      });
+    }
+
+    // ── Computed fields ──
+
+    function enrichVariant(v) {
+      const isAgent = state.session?.role === 'AGENT';
+      const buyPrice = isAgent ? null : Number(v.buyPrice || 0);
+      const sellPrice = Number(v.sellPrice);
+      const onHand = Number(v.onHand);
+      const reorderMin = Number(v.reorderMin);
+      const unitProfit = isAgent ? null : (v.unitProfit != null ? Number(v.unitProfit) : (sellPrice - buyPrice));
+      const valuation = isAgent ? null : (buyPrice * onHand);
+      const potentialProfit = isAgent ? null : (unitProfit * onHand);
+      let status = 'In Stock';
+      if (onHand <= 0) status = 'Out of Stock';
+      else if (onHand <= reorderMin) status = 'Low Stock';
+      return { ...v, buyPrice, sellPrice, onHand, reorderMin, unitProfit, valuation, potentialProfit, status };
+    }
+
+    function getVariants() { return state.variants.map(enrichVariant); }
+
+    function filterVariants(extra = {}) {
+      const { search, category, status, drillDown } = state.searchModel;
+      const q = search.trim().toLowerCase();
+      return getVariants().filter(v => {
+        if (q && !v.sku.toLowerCase().includes(q) &&
+            !(v.productLine||'').toLowerCase().includes(q) &&
+            !(v.variantLabel||'').toLowerCase().includes(q)) return false;
+        if (category !== 'all' && v.category !== category) return false;
+        if (status !== 'all' && v.status !== status) return false;
+        if (drillDown && v[drillDown.field] !== drillDown.value) return false;
+        return true;
+      });
+    }
+
+    function groupBy(arr, key) {
+      const map = new Map();
+      arr.forEach(item => {
+        const k = item[key] || 'Other';
+        if (!map.has(k)) map.set(k, []);
+        map.get(k).push(item);
+      });
+      return map;
+    }
+
+    // ── Navigation ──
+
+    function switchView(v) {
+      if (state.session?.role === 'AGENT' && v !== 'agent') {
+        v = 'agent';
+        showToast('Restricted: Field agents can only access the Agent Sales Portal.', true);
+      }
+      state.activeView = v;
+      ['dashboard', 'agent', 'debtors', 'spreadsheet', 'records'].forEach(name => {
+        const el = document.getElementById(`view-${name}`);
+        if (el) el.classList.toggle('hidden', name !== v);
+      });
+      document.querySelectorAll('.view-tab').forEach(btn => {
+        const targetView = btn.getAttribute('data-view');
+        const active = targetView === v;
+        const isAdminOnly = targetView !== 'agent';
+        btn.className = (active
+          ? 'view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 bg-white text-odoo-plum font-semibold shadow-sm whitespace-nowrap'
+          : 'view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap')
+          + (isAdminOnly ? ' admin-only' : '');
+        if (isAdminOnly && state.session?.role !== 'ADMIN') {
+          btn.style.display = 'none';
+        } else {
+          btn.style.display = '';
+        }
+      });
+      const roleBadge = document.getElementById('active-role-badge');
+      const roleLabel = document.getElementById('role-toggle-label');
+      if (state.session?.role === 'AGENT' || v === 'agent') {
+        if (roleBadge) {
+          roleBadge.textContent = 'Field Agent Mode';
+          roleBadge.className = 'hidden xl:inline-block text-[11px] bg-amber-400/25 border border-amber-300/40 text-amber-100 px-2 py-0.5 rounded-full font-medium';
+        }
+        if (roleLabel) roleLabel.textContent = 'Switch to Admin HQ';
+      } else {
+        if (roleBadge) {
+          roleBadge.textContent = 'Admin HQ Mode';
+          roleBadge.className = 'hidden xl:inline-block text-[11px] bg-emerald-500/25 border border-emerald-300/40 text-emerald-100 px-2 py-0.5 rounded-full font-medium';
+        }
+        if (roleLabel) roleLabel.textContent = 'Switch to Agent View';
+      }
+      applyRoleUI();
+      renderAll();
+    }
+
+    function renderAll() {
+      renderSearchFacets();
+      if (state.activeView === 'dashboard') renderDashboardView();
+      if (state.activeView === 'agent')     renderAgentView();
+      if (state.activeView === 'debtors')   renderDebtorsView();
+      if (state.activeView === 'spreadsheet') renderSpreadsheetView();
+      if (state.activeView === 'records')   renderRecordsView();
+    }
+
+    // ── Search Facets ──
+
+    function renderSearchFacets() {
+      const container = document.getElementById('active-facet-pills');
+      const resetBtn  = document.getElementById('btn-reset-filters');
+      const drillBanner = document.getElementById('drilldown-banner');
+      container.innerHTML = '';
+      const facets = [];
+      if (state.searchModel.category !== 'all') facets.push({ label: `Category: ${state.searchModel.category}`, clear: () => { state.searchModel.category = 'all'; document.getElementById('filter-category').value = 'all'; renderAll(); } });
+      if (state.searchModel.status !== 'all')   facets.push({ label: `Status: ${state.searchModel.status}`,     clear: () => { state.searchModel.status = 'all';   document.getElementById('filter-status').value   = 'all'; renderAll(); } });
+      if (state.searchModel.drillDown) facets.push({ label: `Drill: ${state.searchModel.drillDown.label}`, clear: () => { state.searchModel.drillDown = null; renderAll(); } });
+      facets.forEach(f => {
+        const pill = document.createElement('span');
+        pill.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded bg-odoo-plum text-white text-[11px] font-medium';
+        pill.innerHTML = `<span>${f.label}</span>`;
+        const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'hover:text-amber-200 font-bold ml-0.5'; btn.textContent = '×';
+        btn.addEventListener('click', f.clear); pill.appendChild(btn); container.appendChild(pill);
+      });
+      resetBtn.classList.toggle('hidden', facets.length === 0 && !state.searchModel.search);
+      drillBanner.classList.toggle('hidden', !state.searchModel.drillDown);
+      if (state.searchModel.drillDown) document.getElementById('drilldown-text').textContent = `Active Drill-Down: ${state.searchModel.drillDown.label}`;
+      document.getElementById('nav-record-count').textContent = filterVariants().length;
+      document.getElementById('nav-debtor-count').textContent = state.sales.filter(s => s.paymentMethod === 'CREDIT' && !s.creditCleared).length;
+    }
+
+    // ── Dashboard View ──
+
+    const PALETTE = ['#714B67','#017E84','#F59E0B','#3B82F6','#10B981','#EC4899'];
+
+    function readGroup(metric, groupByKey) {
+      const records = filterVariants();
+      const [field, agg] = metric.split(':');
+      if (!groupByKey) {
+        if (agg === 'count') return records.length;
+        if (field === 'lowStockCount') return records.filter(r => r.status === 'Low Stock' || r.status === 'Out of Stock').length;
+        return records.reduce((s, r) => s + (Number(r[field]) || 0), 0);
+      }
+      const map = new Map();
+      records.forEach(r => {
+        const k = r[groupByKey] || 'Other';
+        if (!map.has(k)) map.set(k, { count: 0, sum: 0 });
+        const e = map.get(k); e.count++; e.sum += Number(r[field]) || 0;
+      });
+      return Array.from(map.entries()).map(([k, e]) => ({ group: k, value: agg === 'count' ? e.count : e.sum }));
+    }
+
+    const DEFAULT_WIDGETS = [
+      { id: 'kpi-val',  kind: 'kpi', title: 'Warehouse Buy Valuation', metric: 'valuation:sum', format: 'currency', subtitle: 'Factory cost of current stock', accent: 'plum' },
+      { id: 'kpi-pot',  kind: 'kpi', title: 'Potential Stock Profit',  metric: 'potentialProfit:sum', format: 'currency', subtitle: 'Sell - Buy across all stock', accent: 'teal' },
+      { id: 'kpi-low',  kind: 'kpi', title: 'Low & Out of Stock',       metric: 'lowStockCount:custom', format: 'alert',    subtitle: 'Variants below reorder min',  accent: 'amber' },
+      { id: 'kpi-hand', kind: 'kpi', title: 'Cartons / Bales On Hand',  metric: 'onHand:sum',     format: 'number',   subtitle: 'All products in warehouse',  accent: 'indigo' },
+      { id: 'chart-cat-profit', kind: 'chart', chartType: 'bar',      title: 'Potential Profit by Category (ETB)', metric: 'potentialProfit:sum', groupBy: 'category', colSpan: 6 },
+      { id: 'chart-cat-stock',  kind: 'chart', chartType: 'doughnut', title: 'Stock Units by Category',             metric: 'onHand:sum',          groupBy: 'category', colSpan: 6 },
+    ];
+
+    let widgets = JSON.parse(JSON.stringify(DEFAULT_WIDGETS));
+
+    function renderDashboardView() {
+      const kpiGrid = document.getElementById('kpi-grid');
+      const chartGrid = document.getElementById('chart-grid');
+      const profitTbody = document.getElementById('admin-profit-tbody');
+      const profitStrip = document.getElementById('admin-profit-strip');
+
+      // Destroy old charts
+      Object.values(state.chartInstances).forEach(c => c && c.destroy());
+      state.chartInstances = {};
+      kpiGrid.innerHTML = ''; chartGrid.innerHTML = '';
+
+      // KPI Cards
+      const accentMap = { plum: 'border-l-4 border-l-odoo-plum', teal: 'border-l-4 border-l-odoo-teal', amber: 'border-l-4 border-l-amber-500', indigo: 'border-l-4 border-l-indigo-600' };
+      widgets.filter(w => w.kind === 'kpi').forEach(w => {
+        const raw = readGroup(w.metric);
+        const formatted = w.format === 'currency' ? fmt(raw) : num(raw);
+        const card = document.createElement('div');
+        card.className = `bg-white border border-slate-200 ${accentMap[w.accent]||''} rounded-xl p-4 shadow-xs hover:shadow-md transition flex flex-col justify-between`;
+        card.innerHTML = `
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">${w.title}</span>
+          <div class="my-2 text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">${formatted}</div>
+          <div class="text-xs text-slate-500">${w.subtitle}</div>`;
+        kpiGrid.appendChild(card);
+      });
+
+      // Sales summary strip
+      let totalRevenue = 0, totalRealizedProfit = 0, cashCollected = 0, unpaidCredit = 0;
+      state.sales.forEach(s => {
+        const total = Number(s.quantity || s.qty || 0) * Number(s.unitSellPrice || s.unitSell || 0);
+        const profit = Number(s.quantity || s.qty || 0) * (Number(s.unitSellPrice || s.unitSell || 0) - Number(s.unitBuySnapshot || s.unitBuy || 0));
+        totalRevenue += total; totalRealizedProfit += profit;
+        if (s.paymentMethod === 'CREDIT' && !s.creditCleared) unpaidCredit += total;
+        else cashCollected += total;
+      });
+      profitStrip.innerHTML = `
+        <div class="bg-emerald-950 text-white rounded-xl p-4 shadow-xs flex flex-col justify-between">
+          <span class="text-[11px] uppercase tracking-wider text-emerald-300 font-semibold">Realized Net Profit (From Sales)</span>
+          <div class="text-xl sm:text-2xl font-bold font-mono my-1 text-emerald-200">${fmt(totalRealizedProfit)}</div>
+          <span class="text-xs text-emerald-300/90">Auto: (Sell − Buy) × Qty Sold</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col justify-between">
+          <span class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Total Agent Sales Revenue</span>
+          <div class="text-xl font-bold font-mono my-1 text-slate-900">${fmt(totalRevenue)}</div>
+          <span class="text-xs text-slate-500">${state.sales.length} logged orders</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col justify-between">
+          <span class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Cash &amp; Mobile Banking Collected</span>
+          <div class="text-xl font-bold font-mono my-1 text-odoo-teal">${fmt(cashCollected)}</div>
+          <span class="text-xs text-slate-500">Settled via Cash, Telebirr, or CBE Birr</span>
+        </div>
+        <div id="card-credit-jump" class="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-xs flex flex-col justify-between cursor-pointer hover:bg-amber-100/70 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] uppercase tracking-wider text-amber-800 font-semibold">Outstanding Customer Credit</span>
+            <span class="text-[11px] font-semibold text-amber-900 underline">Follow up →</span>
+          </div>
+          <div class="text-xl font-bold font-mono my-1 text-amber-900">${fmt(unpaidCredit)}</div>
+          <span class="text-xs text-amber-800">Click to open Debtor tab</span>
+        </div>`;
+      document.getElementById('card-credit-jump')?.addEventListener('click', () => switchView('debtors'));
+
+      // Charts
+      widgets.filter(w => w.kind === 'chart').forEach((w, idx) => {
+        const spanClass = w.colSpan === 12 ? 'lg:col-span-12' : 'lg:col-span-6';
+        const card = document.createElement('div');
+        card.className = `${spanClass} bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs flex flex-col`;
+        const canvasId = `canvas-${w.id}-${idx}`;
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <h3 class="text-sm font-semibold text-slate-800">${w.title}</h3>
+          </div>
+          <div class="relative h-64 w-full"><canvas id="${canvasId}"></canvas></div>`;
+        chartGrid.appendChild(card);
+        const grouped = readGroup(w.metric, w.groupBy);
+        const labels = grouped.map(d => d.group);
+        const values = grouped.map(d => d.value);
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        state.chartInstances[w.id] = new Chart(ctx, {
+          type: w.chartType,
+          data: { labels, datasets: [{ label: w.title, data: values, backgroundColor: w.chartType === 'doughnut' ? PALETTE : PALETTE[idx % PALETTE.length], borderRadius: w.chartType === 'bar' ? 6 : 0, borderWidth: 1 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: w.chartType === 'doughnut', position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }, scales: w.chartType === 'doughnut' ? {} : { y: { beginAtZero: true, ticks: { font: { size: 11 } }, grid: { color: '#F1F5F9' } }, x: { ticks: { font: { size: 11 } }, grid: { display: false } } } }
+        });
+      });
+
+      // Profit breakdown table
+      profitTbody.innerHTML = '';
+      let sumBuy = 0, sumSell = 0;
+      filterVariants().forEach(v => {
+        sumBuy += Number(v.buyPrice); sumSell += Number(v.sellPrice);
+        const marginPct = v.sellPrice > 0 ? ((v.unitProfit / v.sellPrice) * 100).toFixed(1) : '0.0';
+        const soldQty  = state.sales.filter(s => (s.variant?.sku || s.sku) === v.sku).reduce((acc, s) => acc + Number(s.quantity || s.qty || 0), 0);
+        const realizedProfit = soldQty * v.unitProfit;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-4 font-mono text-xs font-semibold text-odoo-plum">${v.sku}</td>
+          <td class="py-2.5 px-4"><div class="font-medium text-slate-900">${v.productLine}</div><div class="text-[11px] text-slate-500">${v.variantLabel}</div></td>
+          <td class="py-2.5 px-4 text-slate-600">${v.category}</td>
+          <td class="py-2.5 px-4 text-right font-mono text-slate-600">${fmt(v.buyPrice)}</td>
+          <td class="py-2.5 px-4 text-right font-mono font-semibold text-slate-900">${fmt(v.sellPrice)}</td>
+          <td class="py-2.5 px-4 text-right font-mono font-bold text-emerald-700">+${fmt(v.unitProfit)}</td>
+          <td class="py-2.5 px-4 text-right font-mono text-xs text-emerald-700">${marginPct}%</td>
+          <td class="py-2.5 px-4 text-right font-mono font-semibold">${num(soldQty)}</td>
+          <td class="py-2.5 px-4 text-right font-mono font-bold text-emerald-800 bg-emerald-50/50">${fmt(realizedProfit)}</td>`;
+        profitTbody.appendChild(tr);
+      });
+      if (sumSell > 0) document.getElementById('admin-overall-margin-badge').textContent = `Avg Margin: ${(((sumSell - sumBuy) / sumSell) * 100).toFixed(1)}%`;
+
+      // Replenishment queue
+      const repBody = document.getElementById('dashboard-replenish-tbody');
+      repBody.innerHTML = '';
+      const alertItems = filterVariants().filter(v => v.status === 'Low Stock' || v.status === 'Out of Stock');
+      if (alertItems.length === 0) {
+        repBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-xs text-slate-400">All variants are above minimum reorder thresholds.</td></tr>`;
+      } else {
+        alertItems.forEach(v => {
+          const badgeClass = v.status === 'Out of Stock' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-amber-100 text-amber-800 border border-amber-200';
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50/80 transition';
+          tr.innerHTML = `
+            <td class="py-2.5 px-4 font-mono text-xs font-semibold text-odoo-plum">${v.sku}</td>
+            <td class="py-2.5 px-4 font-medium text-slate-900">${v.productLine} — ${v.variantLabel}</td>
+            <td class="py-2.5 px-4 text-slate-600">${v.warehouse}</td>
+            <td class="py-2.5 px-4 text-right font-mono font-semibold">${v.onHand}</td>
+            <td class="py-2.5 px-4 text-right font-mono text-slate-500">${v.reorderMin}</td>
+            <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded-full text-[11px] font-medium ${badgeClass}">${v.status}</span></td>
+            <td class="py-2.5 px-4 text-right">
+              <button type="button" class="btn-quick-receive px-2.5 py-1 rounded bg-odoo-tealLight text-odoo-teal hover:bg-odoo-teal hover:text-white text-xs font-semibold transition">+ Receive 50</button>
+            </td>`;
+          tr.querySelector('.btn-quick-receive').addEventListener('click', async () => {
+            try {
+              await API.stockIn(v.sku, 50, 'Quick Replenishment from Dashboard');
+              await refreshAll();
+              showToast(`Received +50 of ${v.sku} into Main Warehouse`);
+            } catch (e) { showToast(e.message, true); }
+          });
+          repBody.appendChild(tr);
+        });
+      }
+      renderMonthlyProfitChart();
+    }
+
+    async function renderMonthlyProfitChart() {
+      const canvas = document.getElementById('canvas-monthly-profit');
+      if (!canvas) return;
+      if (state.chartInstances['monthly-profit']) {
+        state.chartInstances['monthly-profit'].destroy();
+        state.chartInstances['monthly-profit'] = null;
+      }
+      let monthlyData = [];
+      try {
+        monthlyData = await API.monthlyProfit();
+      } catch (_) {
+        // Fallback compute from sales
+      }
+
+      if (!monthlyData || monthlyData.length === 0) {
+        const map = new Map();
+        const MONTHS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        state.sales.forEach(s => {
+          if (!s.soldAt) return;
+          const d = new Date(s.soldAt);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          const label = `${MONTHS[d.getMonth() + 1]} ${d.getFullYear()}`;
+          if (!map.has(key)) map.set(key, { label, profit: 0, revenue: 0, units: 0 });
+          const item = map.get(key);
+          const qty = Number(s.quantity || s.qty || 0);
+          const sell = Number(s.unitSellPrice || s.unitSell || 0);
+          const buy = Number(s.unitBuySnapshot || s.unitBuy || 0);
+          item.profit += (sell - buy) * qty;
+          item.revenue += sell * qty;
+          item.units += qty;
+        });
+        const sortedKeys = Array.from(map.keys()).sort();
+        monthlyData = sortedKeys.map(k => {
+          const item = map.get(k);
+          return {
+            monthLabel: item.label,
+            profit: Math.round(item.profit),
+            revenue: Math.round(item.revenue),
+            unitsSold: item.units
+          };
+        });
+      }
+
+      let totalProfit = 0;
+      let peakProfit = 0;
+      let peakMonth = '—';
+      monthlyData.forEach(m => {
+        totalProfit += Number(m.profit || 0);
+        if (Number(m.profit || 0) > peakProfit) {
+          peakProfit = Number(m.profit || 0);
+          peakMonth = `${m.monthLabel} (${fmt(peakProfit)})`;
+        }
+      });
+      const avgProfit = monthlyData.length > 0 ? totalProfit / monthlyData.length : 0;
+
+      const totalEl = document.getElementById('chart-monthly-total-profit');
+      const peakEl = document.getElementById('chart-monthly-peak-month');
+      const avgEl = document.getElementById('chart-monthly-avg-profit');
+      if (totalEl) totalEl.textContent = fmt(totalProfit);
+      if (peakEl) peakEl.textContent = peakMonth;
+      if (avgEl) avgEl.textContent = fmt(avgProfit);
+
+      const labels = monthlyData.map(d => d.monthLabel);
+      const profits = monthlyData.map(d => d.profit);
+      const revenues = monthlyData.map(d => d.revenue);
+
+      const ctx = canvas.getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+      gradient.addColorStop(0, '#059669');
+      gradient.addColorStop(1, '#10b981');
+
+      state.chartInstances['monthly-profit'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Realized Net Profit (ETB)',
+              data: profits,
+              backgroundColor: gradient,
+              borderRadius: 8,
+              borderSkipped: false,
+              barPercentage: 0.55,
+              order: 2,
+              yAxisID: 'y'
+            },
+            {
+              type: 'line',
+              label: 'Gross Sales Revenue (ETB)',
+              data: revenues,
+              borderColor: '#714B67',
+              backgroundColor: 'rgba(113, 75, 103, 0.08)',
+              borderWidth: 2.5,
+              pointBackgroundColor: '#714B67',
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              tension: 0.35,
+              fill: true,
+              order: 1,
+              yAxisID: 'y'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) label += ': ';
+                  if (context.parsed.y !== null) {
+                    label += 'ETB ' + context.parsed.y.toLocaleString('en-US');
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#F1F5F9' },
+              ticks: {
+                callback: (val) => 'ETB ' + (val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val),
+                font: { size: 11 }
+              }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    // ── Agent View ──
+
+    function getActiveAgentName() {
+      if (state.session?.role === 'ADMIN') {
+        return document.getElementById('active-agent-select').value || '';
+      }
+      return state.session?.fullName || '';
+    }
+
+    function renderAgentView() {
+      // Agent selector vs. read-only name
+      const sel = document.getElementById('active-agent-select');
+      const readonlyDiv = document.getElementById('agent-readonly-name');
+      if (state.session?.role === 'ADMIN') {
+        sel.style.display = '';
+        readonlyDiv.classList.add('hidden');
+      } else {
+        sel.style.display = 'none';
+        readonlyDiv.classList.remove('hidden');
+        readonlyDiv.textContent = state.session?.fullName || '';
+      }
+
+      const agentName = getActiveAgentName();
+      let agentSales = state.sales.filter(s => {
+        const sAgent = s.agentName || s.agent || '';
+        return state.session?.role === 'ADMIN' ? (agentName ? sAgent === agentName : true) : true;
+      });
+
+      // Search query filtering for agent view
+      const q = (state.searchModel.search || '').trim().toLowerCase();
+      if (q) {
+        agentSales = agentSales.filter(s => {
+          const cust = (s.customerName || s.customer || '').toLowerCase();
+          const phone = (s.customerPhone || s.phone || '').toLowerCase();
+          const area = (s.customerArea || s.area || '').toLowerCase();
+          const sku = (s.variant?.sku || s.sku || s.skuSnapshot || '').toLowerCase();
+          const prod = (s.productName || s.productLineSnapshot || '').toLowerCase();
+          const ref = (s.paymentRef || '').toLowerCase();
+          return cust.includes(q) || phone.includes(q) || area.includes(q) || sku.includes(q) || prod.includes(q) || ref.includes(q);
+        });
+      }
+
+      // KPI strip
+      const totalRev   = agentSales.reduce((acc, s) => acc + Number(s.quantity || s.qty || 0) * Number(s.unitSellPrice || s.unitSell || 0), 0);
+      const cashTotal  = agentSales.filter(s => s.paymentMethod === 'CASH' || s.paymentMethod === 'Cash').reduce((acc, s) => acc + Number(s.quantity || s.qty || 0) * Number(s.unitSellPrice || s.unitSell || 0), 0);
+      const mobileTotal= agentSales.filter(s => s.paymentMethod === 'MOBILE_BANKING' || s.paymentMethod === 'Mobile Banking').reduce((acc, s) => acc + Number(s.quantity || s.qty || 0) * Number(s.unitSellPrice || s.unitSell || 0), 0);
+      const creditTotal= agentSales.filter(s => (s.paymentMethod === 'CREDIT' || s.paymentMethod === 'Credit') && !s.creditCleared).reduce((acc, s) => acc + Number(s.quantity || s.qty || 0) * Number(s.unitSellPrice || s.unitSell || 0), 0);
+
+      document.getElementById('agent-kpi-strip').innerHTML = `
+        <div class="bg-white border border-slate-200 border-l-4 border-l-odoo-teal rounded-xl p-4 shadow-xs">
+          <span class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold block">Total Sales Revenue</span>
+          <div class="text-xl font-bold font-mono text-slate-900 my-1">${fmt(totalRev)}</div>
+          <span class="text-xs text-slate-500">${agentSales.length} deliveries</span>
+        </div>
+        <div class="bg-white border border-slate-200 border-l-4 border-l-emerald-500 rounded-xl p-4 shadow-xs">
+          <span class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold block">Cash in Hand</span>
+          <div class="text-xl font-bold font-mono text-emerald-700 my-1">${fmt(cashTotal)}</div>
+          <span class="text-xs text-slate-500">To be handed over at warehouse</span>
+        </div>
+        <div class="bg-white border border-slate-200 border-l-4 border-l-sky-500 rounded-xl p-4 shadow-xs">
+          <span class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold block">Mobile Banking Transfers</span>
+          <div class="text-xl font-bold font-mono text-sky-700 my-1">${fmt(mobileTotal)}</div>
+          <span class="text-xs text-slate-500">Verified Telebirr / CBE transfers</span>
+        </div>
+        <div class="bg-white border border-slate-200 border-l-4 border-l-amber-500 rounded-xl p-4 shadow-xs">
+          <span class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold block">Unpaid Shop Credit</span>
+          <div class="text-xl font-bold font-mono text-amber-700 my-1">${fmt(creditTotal)}</div>
+          <span class="text-xs text-slate-500">Tracked in Debtor View</span>
+        </div>`;
+
+      // Populate SKU dropdown
+      const skuSel = document.getElementById('sale-sku-select');
+      const currentSku = skuSel.value;
+      skuSel.innerHTML = '';
+      getVariants().forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.sku;
+        opt.textContent = `[${v.sku}] ${v.productLine} — ${v.variantLabel} | Sell: ${fmt(v.sellPrice)} (${v.onHand} in stock)`;
+        if (v.onHand <= 0) opt.disabled = true;
+        skuSel.appendChild(opt);
+      });
+      if (currentSku && getVariants().some(v => v.sku === currentSku)) skuSel.value = currentSku;
+      updateSaleFormPreview();
+
+      // Sales table
+      const salesTbody = document.getElementById('agent-sales-tbody');
+      salesTbody.innerHTML = '';
+      document.getElementById('agent-sales-count-badge').textContent = `${agentSales.length} Logged Sales`;
+      agentSales.forEach(s => {
+        const qty = Number(s.quantity || s.qty || 0);
+        const unitSell = Number(s.unitSellPrice || s.unitSell || 0);
+        const total = qty * unitSell;
+        const pm = s.paymentMethod || '';
+        let payBadge = 'bg-emerald-100 text-emerald-800';
+        let payText = pm;
+        if (pm === 'MOBILE_BANKING' || pm === 'Mobile Banking') { payBadge = 'bg-sky-100 text-sky-800 font-semibold'; payText = 'Mobile Banking'; }
+        else if (pm === 'CREDIT' || pm === 'Credit') {
+          payBadge = s.creditCleared ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-900 font-semibold';
+          payText = s.creditCleared ? 'Credit (Cleared)' : 'Credit (Unpaid)';
+        } else { payText = 'Cash'; }
+        const variantSku = s.variant?.sku || s.sku || s.skuSnapshot || '';
+        const variantLabel = s.variant ? `${s.variant.productLine} — ${s.variant.variantLabel}` : (s.productName || s.productLineSnapshot || '');
+        const soldAt = s.soldAt ? s.soldAt.replace('T', ' ').slice(0, 16) : (s.date || '');
+        const agentDisplayName = (s.agentName || s.agent || '').split(' (')[0];
+
+        const isMobile = pm === 'MOBILE_BANKING' || pm === 'Mobile Banking';
+        let slipHtml = '';
+        if (isMobile) {
+          if (s.paymentScreenshotPath) {
+            slipHtml = `<button type="button" class="btn-view-receipt inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-300 font-semibold text-[11px] transition shadow-2xs"><span>🧾 View Slip</span></button>`;
+          } else {
+            slipHtml = `<button type="button" class="btn-attach-receipt inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-300 font-medium text-[11px] transition"><span>+ Attach Slip</span></button>`;
+          }
+        } else if (pm === 'CREDIT' || pm === 'Credit') {
+          slipHtml = `<span class="text-[11px] text-amber-700 font-medium">Invoice Credit</span>`;
+        } else {
+          slipHtml = `<span class="text-[11px] text-slate-400">Cash (N/A)</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${soldAt}</td>
+          <td class="py-2.5 px-3"><div class="font-medium text-slate-900">${s.customerName || s.customer || ''}</div><div class="text-[11px] text-slate-500">${s.customerPhone || s.phone || ''} • ${s.customerArea || s.area || ''}</div></td>
+          <td class="py-2.5 px-3"><span class="font-mono font-semibold text-odoo-plum">${variantSku}</span><span class="text-slate-600 block text-[11px]">${variantLabel}</span></td>
+          <td class="py-2.5 px-3 text-right font-mono font-bold">${qty}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-semibold text-slate-900">${fmt(total)}</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] ${payBadge}">${payText}</span><div class="text-[10px] text-slate-400 mt-0.5">${s.paymentRef || ''}</div></td>
+          <td class="py-2.5 px-3">${slipHtml}</td>
+          <td class="py-2.5 px-3 text-[11px] text-slate-600">${agentDisplayName}</td>`;
+
+        tr.querySelector('.btn-view-receipt')?.addEventListener('click', () => openReceiptModal(s));
+        tr.querySelector('.btn-attach-receipt')?.addEventListener('click', () => openAttachReceiptModal(s.id, s));
+        salesTbody.appendChild(tr);
+      });
+
+      // Price sheet (no buy price)
+      const priceTbody = document.getElementById('agent-price-sheet-tbody');
+      priceTbody.innerHTML = '';
+      getVariants().forEach(v => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="py-2 px-3 font-mono font-semibold text-odoo-plum">${v.sku}</td>
+          <td class="py-2 px-3 font-medium text-slate-800">${v.productLine}</td>
+          <td class="py-2 px-3 text-slate-600">${v.variantLabel}</td>
+          <td class="py-2 px-3 text-right font-mono font-semibold text-odoo-teal">${fmt(v.sellPrice)}</td>
+          <td class="py-2 px-3 text-right font-mono font-bold ${v.onHand <= 0 ? 'text-rose-600' : 'text-slate-800'}">${v.onHand} units</td>`;
+        priceTbody.appendChild(tr);
+      });
+    }
+
+    function updateSaleFormPreview() {
+      const sku = document.getElementById('sale-sku-select').value;
+      const qty = Number(document.getElementById('sale-qty').value) || 0;
+      const v = getVariants().find(x => x.sku === sku);
+      if (!v) return;
+      document.getElementById('sale-unit-price').value = v.sellPrice;
+      document.getElementById('sale-total-preview').textContent = fmt(qty * v.sellPrice);
+      const warnEl = document.getElementById('sale-stock-warning');
+      if (qty > v.onHand) {
+        warnEl.textContent = `Exceeds stock! Only ${v.onHand} available.`;
+        warnEl.className = 'text-[11px] text-rose-600 font-semibold';
+      } else {
+        warnEl.textContent = `${v.onHand} cartons/bales available (${v.onHand - qty} remaining after sale)`;
+        warnEl.className = 'text-[11px] text-emerald-600 font-medium';
+      }
+    }
+
+    // ── Debtors View ──
+
+    function renderDebtorsView() {
+      const tbody = document.getElementById('debtors-tbody');
+      const filterMode = document.getElementById('debtor-filter-status').value;
+      tbody.innerHTML = '';
+      const creditSales = state.sales.filter(s => s.paymentMethod === 'CREDIT' || s.paymentMethod === 'Credit');
+      const unpaidTotal = creditSales.filter(s => !s.creditCleared).reduce((acc, s) => acc + Number(s.quantity || s.qty || 0) * Number(s.unitSellPrice || s.unitSell || 0), 0);
+      document.getElementById('debtors-total-outstanding').textContent = fmt(unpaidTotal);
+      const displayed = filterMode === 'unpaid' ? creditSales.filter(s => !s.creditCleared) : creditSales;
+      if (displayed.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">No outstanding credit balances!</td></tr>`;
+        return;
+      }
+      displayed.forEach(s => {
+        const qty = Number(s.quantity || s.qty || 0);
+        const unitSell = Number(s.unitSellPrice || s.unitSell || 0);
+        const amount = qty * unitSell;
+        const variantSku = s.variant?.sku || s.sku || '';
+        const variantLabel = s.variant ? `${s.variant.productLine} — ${s.variant.variantLabel}` : (s.productName || '');
+        const soldAt = s.soldAt ? s.soldAt.replace('T', ' ').slice(0, 16) : (s.date || '');
+        const agentName = (s.agentName || s.agent || '').split(' (')[0];
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-semibold text-slate-900">${s.customerName || s.customer || ''}</td>
+          <td class="py-3 px-4"><div class="font-mono text-xs text-odoo-teal font-semibold">${s.customerPhone || s.phone || ''}</div><div class="text-[11px] text-slate-500">${s.customerArea || s.area || ''}</div></td>
+          <td class="py-3 px-4"><span class="font-mono font-semibold text-odoo-plum">${variantSku}</span> × <strong>${qty}</strong><div class="text-[11px] text-slate-500">${variantLabel}</div></td>
+          <td class="py-3 px-4 text-xs text-slate-700">${agentName}</td>
+          <td class="py-3 px-4 text-xs"><div class="font-mono text-[11px] text-slate-500">${soldAt}</div><div class="text-[11px] text-amber-800">${s.paymentRef || 'Credit terms'}</div></td>
+          <td class="py-3 px-4 text-right font-mono font-bold ${s.creditCleared ? 'text-slate-400 line-through' : 'text-amber-900'}">${fmt(amount)}</td>
+          <td class="py-3 px-4">${s.creditCleared ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">Cleared</span>' : '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">Unpaid</span>'}</td>
+          <td class="py-3 px-4 text-right">${s.creditCleared ? '<span class="text-xs text-slate-400">Settled</span>' : `<button type="button" class="btn-clear-debt px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition" data-id="${s.id}">Mark Cleared</button>`}</td>`;
+        const btn = tr.querySelector('.btn-clear-debt');
+        if (btn) {
+          btn.addEventListener('click', async () => {
+            try {
+              await API.clearCredit(s.id);
+              await refreshAll();
+              showToast(`Cleared credit of ${fmt(amount)} for ${s.customerName || s.customer}`);
+            } catch (e) { showToast(e.message, true); }
+          });
+        }
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ── Pivot Spreadsheet ──
+
+    function renderSpreadsheetView() {
+      const categories = ['Diapers', 'Sanitary Pads', 'Wet Wipes', 'Tissue Paper'];
+      const warehouses = [...new Set(getVariants().map(v => v.warehouse))].sort();
+      const measure = state.pivotMeasure;
+      const thead = document.getElementById('spreadsheet-thead');
+      const tbody = document.getElementById('spreadsheet-tbody');
+      thead.innerHTML = `<tr><th class="spreadsheet-header w-10 py-2 text-center">#</th><th class="spreadsheet-header py-2 px-3 text-left">Warehouse</th>${categories.map(c => `<th class="spreadsheet-header py-2 px-3 text-right">${c}</th>`).join('')}<th class="spreadsheet-header py-2 px-3 text-right">Row Total</th></tr>`;
+      tbody.innerHTML = '';
+      const records = filterVariants();
+      function compute(wh, cat) {
+        const sub = records.filter(r => (!wh || r.warehouse === wh) && (!cat || r.category === cat));
+        if (measure === 'count') return sub.length;
+        return sub.reduce((acc, r) => acc + (Number(r[measure]) || 0), 0);
+      }
+      function fmtCell(val) { return (measure === 'valuation' || measure === 'potentialProfit') ? fmt(val) : num(val); }
+      warehouses.forEach((wh, rIdx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'bg-white hover:bg-slate-50/60';
+        let html = `<td class="spreadsheet-header text-center py-2">${rIdx + 2}</td><td class="py-2 px-3 font-sans font-semibold text-slate-800 bg-slate-50/50">${wh}</td>`;
+        let rowTotal = 0;
+        categories.forEach(cat => { const val = compute(wh, cat); rowTotal += val; html += `<td class="py-2 px-3 text-right cursor-pointer text-slate-700">${fmtCell(val)}</td>`; });
+        html += `<td class="py-2 px-3 text-right font-bold bg-slate-50 text-slate-900">${fmtCell(rowTotal)}</td>`;
+        tr.innerHTML = html; tbody.appendChild(tr);
+      });
+      const totalTr = document.createElement('tr');
+      totalTr.className = 'bg-odoo-plumLight/50 font-bold text-slate-900';
+      let grandTotal = 0;
+      let totalHtml = `<td class="spreadsheet-header text-center py-2.5">${warehouses.length + 2}</td><td class="py-2.5 px-3 font-sans">Grand Total</td>`;
+      categories.forEach(cat => { const v = compute(null, cat); grandTotal += v; totalHtml += `<td class="py-2.5 px-3 text-right">${fmtCell(v)}</td>`; });
+      totalHtml += `<td class="py-2.5 px-3 text-right text-odoo-plum">${fmtCell(grandTotal)}</td>`;
+      totalTr.innerHTML = totalHtml; tbody.appendChild(totalTr);
+    }
+
+    // ── Records View ──
+
+    function renderRecordsView() {
+      const tbody = document.getElementById('records-tbody');
+      const badge = document.getElementById('records-subtitle-badge');
+      tbody.innerHTML = '';
+      const records = filterVariants();
+      badge.textContent = `${records.length} Variant SKU${records.length === 1 ? '' : 's'} matched`;
+
+      function appendRow(v) {
+        const badgeClass = v.status === 'Out of Stock' ? 'bg-rose-100 text-rose-700' : (v.status === 'Low Stock' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-700');
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="py-3 px-3 font-mono text-xs font-semibold text-odoo-plum">${v.sku}</td>
+          <td class="py-3 px-3"><div class="font-medium text-slate-900">${v.productLine}</div><div class="text-[11px] text-odoo-teal font-medium">${v.variantLabel}</div></td>
+          <td class="py-3 px-3 text-slate-600">${v.category}</td>
+          <td class="py-3 px-3 text-slate-600 text-xs">${v.warehouse}</td>
+          <td class="py-3 px-3 text-right font-mono text-slate-600">${num(v.buyPrice)}</td>
+          <td class="py-3 px-3 text-right font-mono font-semibold text-slate-900">${num(v.sellPrice)}</td>
+          <td class="py-3 px-3 text-right font-mono font-bold text-emerald-700">+${num(v.unitProfit)}</td>
+          <td class="py-3 px-3 text-right font-mono font-bold">${v.onHand}</td>
+          <td class="py-3 px-3 text-right font-mono text-slate-800">${num(v.valuation)}</td>
+          <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full text-[11px] font-medium ${badgeClass}">${v.status}</span></td>
+          <td class="py-3 px-3 text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <button type="button" class="btn-quick-stock-in px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs font-semibold transition border border-emerald-200">+Stock In</button>
+              <button type="button" class="btn-delete-sku px-2.5 py-1 rounded bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white text-xs font-semibold transition border border-rose-200" title="Delete SKU">Delete</button>
+            </div>
+          </td>`;
+        tr.querySelector('.btn-quick-stock-in').addEventListener('click', () => openStockInModal(v.sku));
+        tr.querySelector('.btn-delete-sku').addEventListener('click', () => openDeleteSkuModal(v));
+        tbody.appendChild(tr);
+      }
+
+      if (records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-slate-400">No inventory records match the active filters.</td></tr>`;
+      } else if (state.recordsGroupBy === 'none') {
+        records.forEach(appendRow);
+      } else {
+        const grouped = groupBy(records, state.recordsGroupBy);
+        grouped.forEach((groupItems, groupName) => {
+          const groupVal = groupItems.reduce((acc, x) => acc + x.valuation, 0);
+          const groupUnits = groupItems.reduce((acc, x) => acc + x.onHand, 0);
+          const htr = document.createElement('tr');
+          htr.className = 'bg-odoo-plumLight/60 font-semibold text-odoo-plum text-xs';
+          htr.innerHTML = `<td colspan="7" class="py-2 px-3">▾ ${state.recordsGroupBy.toUpperCase()}: ${groupName} (${groupItems.length} Variants)</td><td class="py-2 px-3 text-right font-mono">${num(groupUnits)}</td><td class="py-2 px-3 text-right font-mono">${num(groupVal)}</td><td colspan="2"></td>`;
+          tbody.appendChild(htr);
+          groupItems.forEach(appendRow);
+        });
+      }
+
+      // Movements ledger
+      const movTbody = document.getElementById('stock-movements-tbody');
+      movTbody.innerHTML = '';
+      document.getElementById('stock-movements-count').textContent = `${state.movements.length} Movements`;
+      state.movements.forEach(m => {
+        const isOut = m.type === 'OUT';
+        const ts = m.timestamp ? m.timestamp.replace('T', ' ').slice(0, 16) : '';
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="py-2 px-4 font-mono text-slate-500">${ts}</td>
+          <td class="py-2 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${isOut ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-800'}">${isOut ? 'OUT (Agent Sale)' : 'IN (Factory Receipt)'}</span></td>
+          <td class="py-2 px-4"><span class="font-mono font-semibold text-odoo-plum">${m.sku}</span> — ${m.productName}</td>
+          <td class="py-2 px-4 text-right font-mono font-bold ${isOut ? 'text-amber-700' : 'text-emerald-700'}">${isOut ? '-' : '+'}${m.quantity}</td>
+          <td class="py-2 px-4 text-slate-600">${m.warehouse}</td>
+          <td class="py-2 px-4 text-slate-600">${m.reference}</td>`;
+        movTbody.appendChild(tr);
+      });
+    }
+
+    // ── Modal helpers ──
+
+    function openModal(id) {
+      const el = document.getElementById(id);
+      el.classList.remove('hidden'); el.classList.add('flex');
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      el.classList.add('hidden'); el.classList.remove('flex');
+    }
+
+    function openStockInModal(prefillSku) {
+      const sel = document.getElementById('stockin-sku');
+      sel.innerHTML = '';
+      getVariants().forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.sku;
+        opt.textContent = `[${v.sku}] ${v.productLine} — ${v.variantLabel} (Current: ${v.onHand})`;
+        sel.appendChild(opt);
+      });
+      if (prefillSku) sel.value = prefillSku;
+      openModal('modal-stock-in');
+    }
+
+    function openReceiptModal(sale) {
+      const img = document.getElementById('receipt-modal-img');
+      const fullLink = document.getElementById('receipt-modal-fullsize');
+      let url = '';
+      if (sale.paymentScreenshotPath) {
+        url = sale.paymentScreenshotPath.startsWith('/')
+          ? sale.paymentScreenshotPath
+          : `/api/screenshots/${sale.paymentScreenshotPath}`;
+      }
+      img.src = url || '';
+      fullLink.href = url || '#';
+
+      document.getElementById('receipt-modal-customer').textContent = sale.customerName || sale.customer || '—';
+      document.getElementById('receipt-modal-phone').textContent = `${sale.customerPhone || ''} • ${sale.customerArea || ''}`;
+      const total = Number(sale.quantity || sale.qty || 0) * Number(sale.unitSellPrice || sale.unitSell || 0);
+      document.getElementById('receipt-modal-amount').textContent = fmt(total);
+      document.getElementById('receipt-modal-ref').textContent = sale.paymentRef || 'N/A';
+      document.getElementById('receipt-modal-date').textContent = (sale.soldAt ? sale.soldAt.replace('T', ' ').slice(0, 16) : sale.date) || '—';
+      document.getElementById('receipt-modal-agent').textContent = sale.agentName || sale.agent || '—';
+      const vName = sale.variant ? `${sale.variant.productLine} — ${sale.variant.variantLabel}` : (sale.productName || sale.productLineSnapshot || 'Item');
+      document.getElementById('receipt-modal-product').textContent = `${sale.variant?.sku || sale.sku || sale.skuSnapshot || ''} (${vName}) × ${sale.quantity || sale.qty}`;
+
+      openModal('modal-receipt-preview');
+    }
+
+    let activeAttachSaleId = null;
+    function openAttachReceiptModal(saleId, sale) {
+      activeAttachSaleId = saleId;
+      document.getElementById('attach-modal-sale-id').value = saleId;
+      document.getElementById('attach-modal-sale-info').textContent = `#${saleId} (${sale.customerName || ''})`;
+      document.getElementById('attach-modal-file-input').value = '';
+      document.getElementById('attach-modal-prompt').classList.remove('hidden');
+      document.getElementById('attach-modal-preview').classList.add('hidden');
+      openModal('modal-attach-receipt');
+    }
+
+    let activeDeleteSku = null;
+    function openDeleteSkuModal(variant) {
+      activeDeleteSku = variant.sku;
+      document.getElementById('delete-sku-code').textContent = variant.sku;
+      document.getElementById('delete-sku-name').textContent = `${variant.productLine} — ${variant.variantLabel}`;
+      openModal('modal-delete-sku');
+    }
+
+    // ── Event Wiring ──
+
+    window.addEventListener('DOMContentLoaded', () => {
+
+      // Login form
+      document.getElementById('login-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const u = document.getElementById('login-username').value.trim();
+        const p = document.getElementById('login-password').value.trim();
+        if (!u || !p) { document.getElementById('login-error').textContent = 'Enter username and password'; document.getElementById('login-error').classList.remove('hidden'); return; }
+        const btn = document.getElementById('login-submit');
+        btn.textContent = 'Signing in…'; btn.disabled = true;
+        await doLogin(u, p);
+        btn.textContent = 'Sign In'; btn.disabled = false;
+      });
+
+      // Check existing session
+      API.me().then(user => {
+        state.session = user;
+        document.getElementById('login-overlay').classList.add('hidden');
+        document.getElementById('app-shell').classList.remove('hidden');
+        document.getElementById('app-shell').classList.add('flex');
+        afterLogin();
+      }).catch(() => {/* not logged in — show login overlay */});
+
+      // Logout
+      document.getElementById('btn-logout').addEventListener('click', doLogout);
+
+      // View tabs
+      document.querySelectorAll('.view-tab').forEach(btn =>
+        btn.addEventListener('click', () => switchView(btn.getAttribute('data-view'))));
+
+      // Role switch (admin only)
+      document.getElementById('btn-switch-role')?.addEventListener('click', () => {
+        if (state.activeView === 'agent') { switchView('dashboard'); showToast('Switched to Admin HQ Dashboard'); }
+        else { switchView('agent'); showToast('Switched to Field Agent Sales Portal'); }
+      });
+
+      document.getElementById('btn-go-agent-portal')?.addEventListener('click', () => switchView('agent'));
+      document.getElementById('btn-view-all-records')?.addEventListener('click', () => switchView('records'));
+      document.getElementById('btn-reset-layout')?.addEventListener('click', () => { widgets = JSON.parse(JSON.stringify(DEFAULT_WIDGETS)); renderAll(); showToast('Restored default widget layout'); });
+
+      // Filters
+      document.getElementById('filter-search').addEventListener('input', e => { state.searchModel.search = e.target.value; renderAll(); });
+      document.getElementById('filter-category').addEventListener('change', e => { state.searchModel.category = e.target.value; renderAll(); });
+      document.getElementById('filter-status').addEventListener('change', e => { state.searchModel.status = e.target.value; renderAll(); });
+      document.getElementById('btn-reset-filters').addEventListener('click', () => {
+        state.searchModel = { search: '', category: 'all', status: 'all', drillDown: null };
+        document.getElementById('filter-search').value = '';
+        document.getElementById('filter-category').value = 'all';
+        document.getElementById('filter-status').value = 'all';
+        renderAll(); showToast('Cleared all filters');
+      });
+      document.getElementById('btn-clear-drilldown').addEventListener('click', () => { state.searchModel.drillDown = null; renderAll(); });
+
+      // Agent selector
+      document.getElementById('active-agent-select').addEventListener('change', renderAgentView);
+
+      // Sale form: Payment method toggle screenshot upload
+      document.querySelectorAll('input[name="sale-payment-method"]').forEach(r => {
+        r.addEventListener('change', () => {
+          const isMobile = r.value === 'MOBILE_BANKING';
+          const sec = document.getElementById('mobile-banking-screenshot-section');
+          if (sec) sec.classList.toggle('hidden', !isMobile);
+        });
+      });
+
+      // Screenshot upload in sale form
+      document.getElementById('sale-screenshot-input')?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          showToast('Uploading receipt screenshot…');
+          const res = await API.uploadScreenshot(file);
+          document.getElementById('sale-screenshot-path').value = res.filename;
+          document.getElementById('screenshot-preview-img').src = res.url;
+          document.getElementById('screenshot-preview-name').textContent = file.name;
+          document.getElementById('screenshot-upload-prompt').classList.add('hidden');
+          const container = document.getElementById('screenshot-preview-container');
+          container.classList.remove('hidden');
+          container.classList.add('flex');
+          showToast('Receipt attached for admin cross-check');
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+
+      document.getElementById('btn-remove-screenshot')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('sale-screenshot-input').value = '';
+        document.getElementById('sale-screenshot-path').value = '';
+        document.getElementById('screenshot-upload-prompt').classList.remove('hidden');
+        const container = document.getElementById('screenshot-preview-container');
+        container.classList.add('hidden');
+        container.classList.remove('flex');
+      });
+
+      // Sale form SKU & Qty preview
+      document.getElementById('sale-sku-select').addEventListener('change', updateSaleFormPreview);
+      document.getElementById('sale-qty').addEventListener('input', updateSaleFormPreview);
+      document.getElementById('sale-customer-select').addEventListener('change', e =>
+        document.getElementById('custom-customer-fields').classList.toggle('hidden', e.target.value !== 'CUSTOM'));
+
+      document.getElementById('form-agent-sale').addEventListener('submit', async e => {
+        e.preventDefault();
+        const sku = document.getElementById('sale-sku-select').value;
+        const qty = Number(document.getElementById('sale-qty').value) || 0;
+        const v = getVariants().find(x => x.sku === sku);
+        if (!v || qty <= 0) return;
+        if (qty > v.onHand) { showToast(`Cannot sell ${qty} — only ${v.onHand} in stock!`, true); return; }
+        const custSel = document.getElementById('sale-customer-select').value;
+        let customerName, customerPhone, customerArea;
+        if (custSel === 'CUSTOM') {
+          customerName  = document.getElementById('sale-custom-name').value.trim() || 'New Retail Shop';
+          customerPhone = document.getElementById('sale-custom-phone').value.trim() || '0911-000-000';
+          customerArea  = document.getElementById('sale-custom-area').value.trim() || 'Addis Ababa';
+        } else {
+          const parts = custSel.split('|');
+          customerName = parts[0]; customerPhone = parts[1] || ''; customerArea = parts[2] || '';
+        }
+        const paymentMethod = document.querySelector('input[name="sale-payment-method"]:checked').value;
+        const paymentRef    = document.getElementById('sale-payment-ref').value.trim() || `${paymentMethod} payment`;
+        const paymentScreenshotPath = document.getElementById('sale-screenshot-path').value || null;
+        const agentName = getActiveAgentName();
+        try {
+          await API.recordSale({ sku, quantity: qty, customerName, customerPhone, customerArea, paymentMethod, paymentRef, paymentScreenshotPath, agentName });
+          await refreshAll();
+          document.getElementById('sale-payment-ref').value = '';
+          document.getElementById('sale-screenshot-input').value = '';
+          document.getElementById('sale-screenshot-path').value = '';
+          document.getElementById('screenshot-upload-prompt').classList.remove('hidden');
+          const container = document.getElementById('screenshot-preview-container');
+          container.classList.add('hidden');
+          container.classList.remove('flex');
+          showToast(`Sale logged: ${qty}× ${sku} (${paymentMethod})`);
+        } catch (err) { showToast(err.message, true); }
+      });
+
+      // Receipt Preview Modal
+      document.getElementById('btn-close-receipt-modal').addEventListener('click', () => closeModal('modal-receipt-preview'));
+      document.getElementById('btn-done-receipt-modal').addEventListener('click', () => closeModal('modal-receipt-preview'));
+
+      // Attach Receipt Modal
+      document.getElementById('btn-close-attach-modal').addEventListener('click', () => closeModal('modal-attach-receipt'));
+      document.getElementById('btn-cancel-attach').addEventListener('click', () => closeModal('modal-attach-receipt'));
+      document.getElementById('attach-modal-file-input').addEventListener('change', (e) => {
+        const f = e.target.files[0];
+        if (f) {
+          document.getElementById('attach-modal-prompt').classList.add('hidden');
+          const prev = document.getElementById('attach-modal-preview');
+          prev.textContent = `✓ Selected: ${f.name}`;
+          prev.classList.remove('hidden');
+        }
+      });
+      document.getElementById('form-attach-receipt').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = document.getElementById('attach-modal-file-input').files[0];
+        if (!f || !activeAttachSaleId) return;
+        const btn = document.getElementById('btn-submit-attach');
+        btn.textContent = 'Uploading…'; btn.disabled = true;
+        try {
+          const res = await API.uploadScreenshot(f);
+          await API.attachScreenshot(activeAttachSaleId, res.filename);
+          await refreshAll();
+          closeModal('modal-attach-receipt');
+          showToast('Payment slip attached successfully');
+        } catch (err) {
+          showToast(err.message, true);
+        } finally {
+          btn.textContent = 'Upload & Save'; btn.disabled = false;
+        }
+      });
+
+      // Delete SKU Modal (Admin)
+      document.getElementById('btn-close-delete-modal').addEventListener('click', () => closeModal('modal-delete-sku'));
+      document.getElementById('btn-cancel-delete').addEventListener('click', () => closeModal('modal-delete-sku'));
+      document.getElementById('btn-confirm-delete-sku').addEventListener('click', async () => {
+        if (!activeDeleteSku) return;
+        const btn = document.getElementById('btn-confirm-delete-sku');
+        btn.textContent = 'Removing…'; btn.disabled = true;
+        try {
+          await API.deleteVariant(activeDeleteSku);
+          await refreshAll();
+          closeModal('modal-delete-sku');
+          showToast(`SKU ${activeDeleteSku} removed from catalog`);
+        } catch (err) {
+          showToast(err.message, true);
+        } finally {
+          btn.textContent = 'Remove SKU'; btn.disabled = false;
+          activeDeleteSku = null;
+        }
+      });
+
+      // Debtors
+      document.getElementById('debtor-filter-status').addEventListener('change', renderDebtorsView);
+
+      // Pivot
+      document.getElementById('pivot-measure').addEventListener('change', e => {
+        state.pivotMeasure = e.target.value; renderSpreadsheetView();
+      });
+
+      // Records groupby
+      document.getElementById('records-groupby').addEventListener('change', e => {
+        state.recordsGroupBy = e.target.value; renderRecordsView();
+      });
+
+      // CSV export
+      document.getElementById('btn-export-csv').addEventListener('click', () => {
+        const rows = filterVariants();
+        const headers = ['SKU','Product Line','Variant','Category','Warehouse','Buy Price','Sell Price','Unit Profit','On Hand','Valuation','Status'];
+        const csvLines = [headers.join(','), ...rows.map(r => [r.sku,`"${r.productLine}"`,`"${r.variantLabel}"`,`"${r.category}"`,`"${r.warehouse}"`,r.buyPrice,r.sellPrice,r.unitProfit,r.onHand,r.valuation,`"${r.status}"`].join(','))];
+        const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'fmcg_inventory.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        showToast(`Exported ${rows.length} variants to CSV`);
+      });
+
+      // ── New SKU Modal ──
+      document.getElementById('btn-open-add-sku').addEventListener('click', () => openModal('modal-add-sku'));
+      document.getElementById('btn-records-add-sku')?.addEventListener('click', () => openModal('modal-add-sku'));
+      document.getElementById('btn-close-sku-modal').addEventListener('click', () => closeModal('modal-add-sku'));
+      document.getElementById('btn-cancel-sku').addEventListener('click', () => closeModal('modal-add-sku'));
+      document.getElementById('form-add-sku').addEventListener('submit', async e => {
+        e.preventDefault();
+        const payload = {
+          sku:          document.getElementById('sku-code').value.trim(),
+          productLine:  document.getElementById('sku-name').value.trim(),
+          variantLabel: document.getElementById('sku-variant').value.trim() || 'Single Variant',
+          category:     document.getElementById('sku-category').value,
+          warehouse:    'Main Warehouse',
+          supplier:     document.getElementById('sku-supplier').value.trim() || 'Factory Partner',
+          buyPrice:     Number(document.getElementById('sku-cost').value),
+          sellPrice:    Number(document.getElementById('sku-sell').value),
+          onHand:       Number(document.getElementById('sku-onhand').value),
+          reorderMin:   Number(document.getElementById('sku-min').value),
+        };
+        try {
+          await API.createVariant(payload);
+          await refreshAll();
+          closeModal('modal-add-sku');
+          document.getElementById('form-add-sku').reset();
+          showToast(`Registered SKU ${payload.sku} with profit ETB ${payload.sellPrice - payload.buyPrice}`);
+        } catch (err) { showToast(err.message, true); }
+      });
+
+      // ── Stock-In Modal ──
+      document.getElementById('btn-open-stock-in').addEventListener('click', () => openStockInModal());
+      document.getElementById('btn-records-stock-in')?.addEventListener('click', () => openStockInModal());
+      document.getElementById('btn-close-stock-in').addEventListener('click', () => closeModal('modal-stock-in'));
+      document.getElementById('btn-cancel-stock-in').addEventListener('click', () => closeModal('modal-stock-in'));
+      document.getElementById('form-stock-in').addEventListener('submit', async e => {
+        e.preventDefault();
+        const sku  = document.getElementById('stockin-sku').value;
+        const qty  = Number(document.getElementById('stockin-qty').value) || 0;
+        const note = document.getElementById('stockin-factory').value.trim() || 'Factory Delivery';
+        if (!sku || qty <= 0) { showToast('Select a SKU and enter a valid quantity', true); return; }
+        try {
+          await API.stockIn(sku, qty, note);
+          await refreshAll();
+          closeModal('modal-stock-in');
+          showToast(`Received +${qty} units of ${sku} into Main Warehouse`);
+        } catch (err) { showToast(err.message, true); }
+      });
+
+      // ── Create Agent Modal ──
+      document.getElementById('btn-create-agent').addEventListener('click', () => { document.getElementById('create-agent-error').classList.add('hidden'); openModal('modal-create-agent'); });
+      document.getElementById('btn-close-create-agent').addEventListener('click', () => closeModal('modal-create-agent'));
+      document.getElementById('btn-cancel-create-agent').addEventListener('click', () => closeModal('modal-create-agent'));
+      document.getElementById('form-create-agent').addEventListener('submit', async e => {
+        e.preventDefault();
+        const errEl = document.getElementById('create-agent-error');
+        errEl.classList.add('hidden');
+        const data = {
+          username:  document.getElementById('agent-username').value.trim(),
+          password:  document.getElementById('agent-password').value.trim(),
+          fullName:  document.getElementById('agent-fullname').value.trim(),
+          routeName: document.getElementById('agent-route').value.trim(),
+        };
+        try {
+          await API.createAgent(data);
+          state.agentList = await API.agents();
+          populateAgentDropdown();
+          closeModal('modal-create-agent');
+          document.getElementById('form-create-agent').reset();
+          showToast(`Created agent account for ${data.fullName}`);
+        } catch (err) {
+          errEl.textContent = err.message;
+          errEl.classList.remove('hidden');
+        }
+      });
+    });
+
+  })();
+  </script>
+</body>
+</html>

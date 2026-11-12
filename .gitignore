@@ -1,0 +1,31 @@
+target/
+*.class
+*.log
+.DS_Store
+
+# Secrets and environment files
+.env
+*.env
+.pgpass
+
+# Database data files and backups
+data/
+*.mv.db
+*.dump
+*.sql
+!src/**/*.sql
+
+# Uploaded payment receipts (business data — never commit)
+uploads/
+
+# Local dev scripts with environment-specific paths
+run.sh
+setup_postgres.sh
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# OS files
+Thumbs.db
