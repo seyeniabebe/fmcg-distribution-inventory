@@ -273,5 +273,143 @@ public class SecurityAndOperationsTest {
                         .content(om.writeValueAsString(Map.of("username", "agent1", "password", "brandNewPass123"))))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    @DisplayName("11. Forced password change workflow: temporary reset, old password rejection, forced update")
+    void testForcedPasswordChangeWorkflow() throws Exception {
+        MockHttpSession adminSession = new MockHttpSession();
+        adminSession.setAttribute("role", "ADMIN");
+        adminSession.setAttribute("username", "admin");
+
+        // 1. Admin resets agent1 with temporary password and forceChangeOnNextLogin=true
+        mvc.perform(post("/api/auth/reset-password")
+                        .session(adminSession)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of(
+                                "username", "agent1",
+                                "newPassword", "TempAgentPass1",
+                                "forceChangeOnNextLogin", "true"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.forceChangeOnNextLogin").value(true));
+
+        // 2. Old password is now rejected
+        mvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("username", "agent1", "password", "agentSecret123"))))
+                .andExpect(status().isUnauthorized());
+
+        // 3. Login with temporary password succeeds and flags mustChangePassword=true
+        String loginResp = mvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("username", "agent1", "password", "TempAgentPass1"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mustChangePassword").value(true))
+                .andReturn().getResponse().getContentAsString();
+
+        // 4. Agent attempts self-service change with weak password (< 8 chars) -> rejected
+        MockHttpSession agentSession = new MockHttpSession();
+        agentSession.setAttribute("role", "AGENT");
+        agentSession.setAttribute("username", "agent1");
+
+        mvc.perform(post("/api/auth/change-password")
+                        .session(agentSession)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of(
+                                "currentPassword", "TempAgentPass1",
+                                "newPassword", "weak1"
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Password must be at least 8 characters"));
+
+        // 5. Agent attempts self-service change with no digits -> rejected
+        mvc.perform(post("/api/auth/change-password")
+                        .session(agentSession)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of(
+                                "currentPassword", "TempAgentPass1",
+                                "newPassword", "onlylettershere"
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Password must contain at least one letter and one number"));
+
+        // 6. Agent performs self-service change with valid permanent password
+        mvc.perform(post("/api/auth/change-password")
+                        .session(agentSession)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of(
+                                "currentPassword", "TempAgentPass1",
+                                "newPassword", "PermAgentPass2026"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mustChangePassword").value(false));
+
+        // 7. Temporary password is now rejected
+        mvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("username", "agent1", "password", "TempAgentPass1"))))
+                .andExpect(status().isUnauthorized());
+
+        // 8. New permanent password succeeds with mustChangePassword=false
+        mvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("username", "agent1", "password", "PermAgentPass2026"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mustChangePassword").value(false));
+    }
+
+    @Test
+    @DisplayName("12. Admin self-service password change: validation, old password rejection, update")
+    void testAdminSelfServicePasswordChange() throws Exception {
+        MockHttpSession adminSession = new MockHttpSession();
+        adminSession.setAttribute("role", "ADMIN");
+        adminSession.setAttribute("username", "admin");
+
+        // 1. Wrong current password -> rejected
+        mvc.perform(post("/api/auth/change-password")
+                        .session(adminSession)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of(
+                                "currentPassword", "wrongCurrentPass",
+                                "newPassword", "AdminSecure2026"
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Current password is incorrect"));
+
+        // 2. Identical new password -> rejected
+        mvc.perform(post("/api/auth/change-password")
+                        .session(adminSession)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of(
+                                "currentPassword", "adminSecret123",
+                                "newPassword", "adminSecret123"
+                        ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("New password cannot be identical to the current password"));
+
+        // 3. Valid self-service change -> succeeds
+        mvc.perform(post("/api/auth/change-password")
+                        .session(adminSession)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of(
+                                "currentPassword", "adminSecret123",
+                                "newPassword", "AdminSecure2026"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Password changed successfully"));
+
+        // 4. Old password rejected
+        mvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("username", "admin", "password", "adminSecret123"))))
+                .andExpect(status().isUnauthorized());
+
+        // 5. New password succeeds
+        mvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(Map.of("username", "admin", "password", "AdminSecure2026"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("ADMIN"));
+    }
 }
 

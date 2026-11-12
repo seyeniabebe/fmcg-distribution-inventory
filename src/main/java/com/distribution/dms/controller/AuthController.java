@@ -61,12 +61,14 @@ public class AuthController {
         session.setAttribute("username", user.getUsername());
         session.setAttribute("role", user.getRole());
         session.setAttribute("fullName", user.getFullName());
+        session.setAttribute("mustChangePassword", user.isPasswordResetRequired());
 
         Map<String, Object> resp = new HashMap<>();
         resp.put("username", user.getUsername());
         resp.put("fullName", user.getFullName());
         resp.put("role", user.getRole());
         resp.put("routeName", user.getRouteName());
+        resp.put("mustChangePassword", user.isPasswordResetRequired());
         resp.put("sessionId", session.getId());
         return ResponseEntity.ok(resp);
     }
@@ -89,6 +91,8 @@ public class AuthController {
         resp.put("username", session.getAttribute("username"));
         resp.put("fullName", session.getAttribute("fullName"));
         resp.put("role", role);
+        resp.put("mustChangePassword", session.getAttribute("mustChangePassword") != null
+                ? session.getAttribute("mustChangePassword") : false);
         resp.put("sessionId", session.getId());
         return ResponseEntity.ok(resp);
     }
@@ -152,12 +156,42 @@ public class AuthController {
         }
         String username = body.getOrDefault("username", "").trim();
         String newPassword = body.getOrDefault("newPassword", "").trim();
+        boolean forceChange = body.get("forceChangeOnNextLogin") == null
+                || Boolean.parseBoolean(body.get("forceChangeOnNextLogin"));
+
         if (username.isEmpty() || newPassword.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "username and newPassword are required"));
         }
         try {
-            resetService.resetPassword(username, newPassword);
-            return ResponseEntity.ok(Map.of("message", "Password reset successful for user: " + username));
+            resetService.resetPassword(username, newPassword, forceChange);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Password reset successful for user: " + username,
+                    "forceChangeOnNextLogin", forceChange
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /** POST /api/auth/change-password — Self-service password change for authenticated users */
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> body, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
+        }
+        String currentPassword = body.getOrDefault("currentPassword", "").trim();
+        String newPassword = body.getOrDefault("newPassword", "").trim();
+        if (currentPassword.isEmpty() || newPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "currentPassword and newPassword are required"));
+        }
+        try {
+            resetService.changePassword(username, currentPassword, newPassword);
+            session.setAttribute("mustChangePassword", false);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Password changed successfully",
+                    "mustChangePassword", false
+            ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

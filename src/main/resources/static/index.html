@@ -130,6 +130,9 @@
           <button id="btn-create-agent" type="button" class="admin-only px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-xs font-medium transition flex items-center gap-1">
             <span>+ New Agent</span>
           </button>
+          <button id="btn-open-change-password" type="button" class="px-2.5 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition" title="Change your password">
+            Password
+          </button>
           <button id="btn-logout" type="button" class="px-2.5 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition">
             Logout
           </button>
@@ -762,6 +765,40 @@
         </div>
       </form>
     </div>
+  </div>
+
+  <!-- ==================== MODAL: CHANGE PASSWORD ==================== -->
+  <div id="modal-change-password" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full overflow-hidden">
+      <div class="px-5 py-4 bg-odoo-plum text-white flex items-center justify-between">
+        <h3 id="modal-change-password-title" class="text-sm font-semibold">Change Password</h3>
+        <button id="btn-close-change-password" type="button" class="text-white/80 hover:text-white text-lg leading-none">&times;</button>
+      </div>
+      <form id="form-change-password" class="p-5 space-y-3.5 text-xs sm:text-sm">
+        <div id="forced-change-notice" class="hidden text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+          <strong>Temporary Password Detected:</strong> Please choose a new permanent password to continue.
+        </div>
+        <div>
+          <label for="cp-current" class="block font-medium text-slate-700 mb-1">Current / Temporary Password</label>
+          <input id="cp-current" type="password" required autocomplete="current-password" placeholder="••••••••" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+        </div>
+        <div>
+          <label for="cp-new" class="block font-medium text-slate-700 mb-1">New Password</label>
+          <input id="cp-new" type="password" required minlength="8" autocomplete="new-password" placeholder="Min 8 chars (letters & numbers)" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+        </div>
+        <div>
+          <label for="cp-confirm" class="block font-medium text-slate-700 mb-1">Confirm New Password</label>
+          <input id="cp-confirm" type="password" required minlength="8" autocomplete="new-password" placeholder="Re-enter new password" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+        </div>
+        <div id="change-password-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2 font-medium"></div>
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btn-cancel-change-password" type="button" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-odoo-plum text-white font-semibold hover:bg-odoo-plumDark">Update Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ==================== MODAL: RECEIPT & BANK STATEMENT CROSS-CHECK ==================== -->
   <div id="modal-receipt-preview" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
@@ -943,7 +980,8 @@
       me: ()           => api('GET',  '/api/auth/me'),
       agents: ()       => api('GET',  '/api/auth/agents'),
       createAgent: (d) => api('POST', '/api/auth/create-agent', d),
-      resetPassword: (u, p) => api('POST', '/api/auth/reset-password', { username: u, newPassword: p }),
+      resetPassword: (u, p, force = true) => api('POST', '/api/auth/reset-password', { username: u, newPassword: p, forceChangeOnNextLogin: String(force) }),
+      changePassword: (cp, np) => api('POST', '/api/auth/change-password', { currentPassword: cp, newPassword: np }),
       variants: ()     => api('GET',  '/api/variants'),
       createVariant:(v)=> api('POST', '/api/variants', v),
       deleteVariant:(sku)=> api('DELETE', `/api/variants/${encodeURIComponent(sku)}`),
@@ -1008,6 +1046,28 @@
       } else {
         switchView('dashboard');
       }
+      if (state.session.mustChangePassword) {
+        showChangePasswordModal(true);
+      }
+    }
+
+    function showChangePasswordModal(forced = false) {
+      const notice = document.getElementById('forced-change-notice');
+      const btnCancel = document.getElementById('btn-cancel-change-password');
+      const btnClose = document.getElementById('btn-close-change-password');
+      document.getElementById('change-password-error').classList.add('hidden');
+      document.getElementById('form-change-password').reset();
+
+      if (forced) {
+        notice.classList.remove('hidden');
+        btnCancel.classList.add('hidden');
+        btnClose.classList.add('hidden');
+      } else {
+        notice.classList.add('hidden');
+        btnCancel.classList.remove('hidden');
+        btnClose.classList.remove('hidden');
+      }
+      openModal('modal-change-password');
     }
 
     function applyRoleUI() {
@@ -2173,6 +2233,36 @@
           closeModal('modal-create-agent');
           document.getElementById('form-create-agent').reset();
           showToast(`Created agent account for ${data.fullName}`);
+        } catch (err) {
+          errEl.textContent = err.message;
+          errEl.classList.remove('hidden');
+        }
+      });
+
+      // ── Change Password Modal ──
+      document.getElementById('btn-open-change-password').addEventListener('click', () => showChangePasswordModal(false));
+      document.getElementById('btn-close-change-password').addEventListener('click', () => closeModal('modal-change-password'));
+      document.getElementById('btn-cancel-change-password').addEventListener('click', () => closeModal('modal-change-password'));
+      document.getElementById('form-change-password').addEventListener('submit', async e => {
+        e.preventDefault();
+        const errEl = document.getElementById('change-password-error');
+        errEl.classList.add('hidden');
+        const currentPassword = document.getElementById('cp-current').value.trim();
+        const newPassword = document.getElementById('cp-new').value.trim();
+        const confirmPassword = document.getElementById('cp-confirm').value.trim();
+
+        if (newPassword !== confirmPassword) {
+          errEl.textContent = 'New passwords do not match';
+          errEl.classList.remove('hidden');
+          return;
+        }
+
+        try {
+          await API.changePassword(currentPassword, newPassword);
+          state.session.mustChangePassword = false;
+          closeModal('modal-change-password');
+          document.getElementById('form-change-password').reset();
+          showToast('Password updated successfully');
         } catch (err) {
           errEl.textContent = err.message;
           errEl.classList.remove('hidden');

@@ -23,14 +23,22 @@ public class AppUser {
 
     private String routeName; // e.g. "Bole & CMC Route"
 
+    @Column(name = "password_reset_required", nullable = false)
+    private boolean passwordResetRequired = false;
+
     public AppUser() {}
 
     public AppUser(String username, String passwordHash, String fullName, String role, String routeName) {
+        this(username, passwordHash, fullName, role, routeName, false);
+    }
+
+    public AppUser(String username, String passwordHash, String fullName, String role, String routeName, boolean passwordResetRequired) {
         this.username = username;
         this.passwordHash = passwordHash;
         this.fullName = fullName;
         this.role = role;
         this.routeName = routeName;
+        this.passwordResetRequired = passwordResetRequired;
     }
 
     public Long getId() { return id; }
@@ -44,4 +52,6 @@ public class AppUser {
     public void setRole(String role) { this.role = role; }
     public String getRouteName() { return routeName; }
     public void setRouteName(String routeName) { this.routeName = routeName; }
+    public boolean isPasswordResetRequired() { return passwordResetRequired; }
+    public void setPasswordResetRequired(boolean passwordResetRequired) { this.passwordResetRequired = passwordResetRequired; }
 }
