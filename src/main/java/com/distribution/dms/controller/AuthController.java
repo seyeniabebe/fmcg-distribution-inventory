@@ -2,9 +2,11 @@ package com.distribution.dms.controller;
 
 import com.distribution.dms.model.AppUser;
 import com.distribution.dms.repository.AppUserRepository;
+import com.distribution.dms.service.AdminPasswordResetService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -16,10 +18,31 @@ import java.util.Optional;
 public class AuthController {
 
     private final AppUserRepository userRepo;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final AdminPasswordResetService resetService;
 
-    public AuthController(AppUserRepository userRepo) {
+    public AuthController(AppUserRepository userRepo,
+                          BCryptPasswordEncoder passwordEncoder,
+                          AdminPasswordResetService resetService) {
         this.userRepo = userRepo;
+        this.passwordEncoder = passwordEncoder;
+        this.resetService = resetService;
     }
+
+    // ────────────────────────── HELPER ──────────────────────────
+
+    /**
+     * Authenticates the user using BCrypt password hashing.
+     * Strictly requires a valid BCrypt hash — legacy plaintext fallback has been removed.
+     */
+    private boolean passwordMatches(String rawPassword, String storedHash) {
+        if (storedHash == null || rawPassword == null) {
+            return false;
+        }
+        return passwordEncoder.matches(rawPassword, storedHash);
+    }
+
+    // ────────────────────────── ENDPOINTS ──────────────────────────
 
     /** POST /api/auth/login — { username, password } → session token + user info */
     @PostMapping("/login")
@@ -28,7 +51,7 @@ public class AuthController {
         String password = body.getOrDefault("password", "").trim();
 
         Optional<AppUser> found = userRepo.findByUsername(username);
-        if (found.isEmpty() || !found.get().getPasswordHash().equals(password)) {
+        if (found.isEmpty() || !passwordMatches(password, found.get().getPasswordHash())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid username or password"));
         }
@@ -102,10 +125,15 @@ public class AuthController {
         if (username.isEmpty() || password.isEmpty() || fullName.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "username, password, and fullName are required"));
         }
+        if (password.length() < 8) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Password must be at least 8 characters"));
+        }
         if (userRepo.findByUsername(username).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Username already exists"));
         }
-        AppUser newAgent = new AppUser(username, password, fullName, "AGENT", routeName);
+        // Store password with BCrypt — never plaintext
+        String hashedPassword = passwordEncoder.encode(password);
+        AppUser newAgent = new AppUser(username, hashedPassword, fullName, "AGENT", routeName);
         userRepo.save(newAgent);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "username", newAgent.getUsername(),
@@ -113,5 +141,25 @@ public class AuthController {
                 "role", newAgent.getRole(),
                 "routeName", newAgent.getRouteName() == null ? "" : newAgent.getRouteName()
         ));
+    }
+
+    /** POST /api/auth/reset-password — ADMIN only: reset any user's password */
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body, HttpSession session) {
+        String role = (String) session.getAttribute("role");
+        if (!"ADMIN".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin access required"));
+        }
+        String username = body.getOrDefault("username", "").trim();
+        String newPassword = body.getOrDefault("newPassword", "").trim();
+        if (username.isEmpty() || newPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "username and newPassword are required"));
+        }
+        try {
+            resetService.resetPassword(username, newPassword);
+            return ResponseEntity.ok(Map.of("message", "Password reset successful for user: " + username));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

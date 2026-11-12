@@ -74,9 +74,6 @@
           class="w-full bg-odoo-plum hover:bg-odoo-plumDark text-white font-semibold py-2.5 rounded-xl shadow-sm transition text-sm">
           Sign In
         </button>
-        <div class="text-center text-[11px] text-slate-400 pt-1">
-          <span class="font-medium text-slate-600">Accounts:</span> admin/admin123 · dawit/dawit123 · selam/selam123 · biniyam/biniyam123
-        </div>
       </form>
     </div>
   </div>
@@ -747,7 +744,7 @@
           </div>
           <div>
             <label for="agent-password" class="block font-medium text-slate-700 mb-1">Password</label>
-            <input id="agent-password" type="text" required placeholder="e.g. yonas123" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+            <input id="agent-password" type="password" required minlength="8" placeholder="Minimum 8 characters" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
           </div>
         </div>
         <div>
@@ -946,6 +943,7 @@
       me: ()           => api('GET',  '/api/auth/me'),
       agents: ()       => api('GET',  '/api/auth/agents'),
       createAgent: (d) => api('POST', '/api/auth/create-agent', d),
+      resetPassword: (u, p) => api('POST', '/api/auth/reset-password', { username: u, newPassword: p }),
       variants: ()     => api('GET',  '/api/variants'),
       createVariant:(v)=> api('POST', '/api/variants', v),
       deleteVariant:(sku)=> api('DELETE', `/api/variants/${encodeURIComponent(sku)}`),

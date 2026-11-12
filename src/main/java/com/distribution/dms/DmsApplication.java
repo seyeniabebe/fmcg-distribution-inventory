@@ -13,6 +13,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,7 +33,8 @@ public class DmsApplication {
     CommandLineRunner seedData(ProductVariantRepository variantRepo,
                               AppUserRepository userRepo,
                               SaleTransactionRepository saleRepo,
-                              StockMovementRepository movementRepo) {
+                              StockMovementRepository movementRepo,
+                              BCryptPasswordEncoder passwordEncoder) {
         return args -> {
             // ── Seed product catalog (all in single "Main Warehouse") ──
             if (variantRepo.count() == 0) {
@@ -49,13 +52,13 @@ public class DmsApplication {
                 ));
             }
 
-            // ── Seed user accounts ──
+            // ── Seed user accounts (BCrypt-hashed passwords for fresh installs) ──
             if (userRepo.count() == 0) {
                 userRepo.saveAll(List.of(
-                    new AppUser("admin",   "admin123",   "System Administrator",      "ADMIN", null),
-                    new AppUser("dawit",   "dawit123",   "Dawit Mekonnen",            "AGENT", "Bole & CMC Route"),
-                    new AppUser("selam",   "selam123",   "Selamawit Tadesse",         "AGENT", "Merkato & Piassa Route"),
-                    new AppUser("biniyam", "biniyam123", "Biniyam Alemu",             "AGENT", "Megenagna & Ayat Route")
+                    new AppUser("admin",   passwordEncoder.encode("admin123"),   "System Administrator",      "ADMIN", null),
+                    new AppUser("dawit",   passwordEncoder.encode("dawit123"),   "Dawit Mekonnen",            "AGENT", "Bole & CMC Route"),
+                    new AppUser("selam",   passwordEncoder.encode("selam123"),   "Selamawit Tadesse",         "AGENT", "Merkato & Piassa Route"),
+                    new AppUser("biniyam", passwordEncoder.encode("biniyam123"), "Biniyam Alemu",             "AGENT", "Megenagna & Ayat Route")
                 ));
             }
 
