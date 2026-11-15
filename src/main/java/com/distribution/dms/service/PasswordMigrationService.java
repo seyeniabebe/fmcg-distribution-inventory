@@ -43,15 +43,95 @@ public class PasswordMigrationService {
                                        BCryptPasswordEncoder encoder,
                                        org.springframework.core.env.Environment env) {
         return args -> {
-            String flag = env.getProperty("app.security.migrate-passwords", "false");
-            if (!"true".equalsIgnoreCase(flag)) {
-                return; // Migration not requested — skip silently
+            String migrateFlag = env.getProperty("app.security.migrate-passwords", "false");
+            if ("true".equalsIgnoreCase(migrateFlag)) {
+                log.info("Password migration: scanning for plaintext passwords...");
+                migrateAllPasswords(userRepo, encoder);
+                log.info("Password migration: complete. Set app.security.migrate-passwords=false.");
             }
 
-            log.info("Password migration: scanning for plaintext passwords...");
-            migrateAllPasswords(userRepo, encoder);
-            log.info("Password migration: complete. Set app.security.migrate-passwords=false and restart.");
+            String rotateFlag = env.getProperty("app.security.rotate-compromised-passwords", "false");
+            if ("true".equalsIgnoreCase(rotateFlag)) {
+                log.info("Compromised password rotation: invalidating compromised credentials and generating secure temporary passwords...");
+                String outputFile = env.getProperty("app.security.credentials-output-file", "data/initial_credentials_distribution.txt");
+                rotateCompromisedCredentials(userRepo, encoder, outputFile);
+                log.info("Compromised password rotation complete. Temporary credentials saved to {}", outputFile);
+            }
         };
+    }
+
+    private static final String UPPER = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    private static final String LOWER = "abcdefghijkmnpqrstuvwxyz";
+    private static final String DIGITS = "23456789";
+    private static final String ALL_CHARS = UPPER + LOWER + DIGITS;
+    private static final java.security.SecureRandom RANDOM = new java.security.SecureRandom();
+
+    public static String generateSecureTemporaryPassword(int length) {
+        StringBuilder sb = new StringBuilder(length);
+        sb.append(UPPER.charAt(RANDOM.nextInt(UPPER.length())));
+        sb.append(UPPER.charAt(RANDOM.nextInt(UPPER.length())));
+        sb.append(LOWER.charAt(RANDOM.nextInt(LOWER.length())));
+        sb.append(LOWER.charAt(RANDOM.nextInt(LOWER.length())));
+        sb.append(DIGITS.charAt(RANDOM.nextInt(DIGITS.length())));
+        sb.append(DIGITS.charAt(RANDOM.nextInt(DIGITS.length())));
+        for (int i = 6; i < length; i++) {
+            sb.append(ALL_CHARS.charAt(RANDOM.nextInt(ALL_CHARS.length())));
+        }
+        char[] chars = sb.toString().toCharArray();
+        for (int i = chars.length - 1; i > 0; i--) {
+            int j = RANDOM.nextInt(i + 1);
+            char temp = chars[i];
+            chars[i] = chars[j];
+            chars[j] = temp;
+        }
+        return new String(chars);
+    }
+
+    @Transactional
+    public void rotateCompromisedCredentials(AppUserRepository userRepo, BCryptPasswordEncoder encoder, String outputFilePath) {
+        List<AppUser> users = userRepo.findAll();
+        StringBuilder report = new StringBuilder();
+        report.append("================================================================================\n");
+        report.append("FMCG DMS - ONE-TIME INITIAL TEMPORARY CREDENTIAL DISTRIBUTION\n");
+        report.append("Generated: ").append(java.time.LocalDateTime.now()).append("\n");
+        report.append("SECURITY NOTICE: Distribute to authorized staff only. Each user is required\n");
+        report.append("to set a new permanent password immediately upon their first login.\n");
+        report.append("================================================================================\n\n");
+
+        for (AppUser user : users) {
+            String tempPassword = generateSecureTemporaryPassword(14);
+            user.setPasswordHash(encoder.encode(tempPassword));
+            user.setPasswordResetRequired(true);
+            userRepo.save(user);
+
+            report.append("Username:       ").append(user.getUsername()).append("\n");
+            report.append("Full Name:      ").append(user.getFullName()).append("\n");
+            report.append("Role:           ").append(user.getRole()).append("\n");
+            report.append("Route/Area:     ").append(user.getRouteName() == null ? "None (HQ)" : user.getRouteName()).append("\n");
+            report.append("Temporary Pass: ").append(tempPassword).append("\n");
+            report.append("Force Reset:    REQUIRED ON FIRST LOGIN\n");
+            report.append("--------------------------------------------------------------------------------\n\n");
+        }
+
+        try {
+            java.nio.file.Path path = java.nio.file.Paths.get(outputFilePath).toAbsolutePath().normalize();
+            if (path.getParent() != null && !java.nio.file.Files.exists(path.getParent())) {
+                java.nio.file.Files.createDirectories(path.getParent());
+            }
+            java.nio.file.Files.writeString(path, report.toString(), java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+            try {
+                // Set file permission to 600 (owner read/write only) on POSIX filesystems
+                java.nio.file.Files.setPosixFilePermissions(path, java.util.Set.of(
+                        java.nio.file.attribute.PosixFilePermission.OWNER_READ,
+                        java.nio.file.attribute.PosixFilePermission.OWNER_WRITE
+                ));
+            } catch (UnsupportedOperationException ignored) {
+                // Non-POSIX filesystem (Windows)
+            }
+        } catch (java.io.IOException e) {
+            log.error("Failed to write credential distribution file: {}", e.getMessage());
+            throw new RuntimeException("Could not save initial credential distribution file", e);
+        }
     }
 
     @Transactional

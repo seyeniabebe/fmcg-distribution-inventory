@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: fmcg-dms
+    runtime: docker
+    plan: standard
+    healthCheckPath: /actuator/health
+    disk:
+      name: dms-screenshots
+      mountPath: /var/data/screenshots
+      sizeGB: 10
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: UPLOAD_DIR
+        value: /var/data/screenshots
+      - key: SESSION_COOKIE_SECURE
+        value: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fmcg-dms-postgres
+          property: connectionString
+
+databases:
+  - name: fmcg-dms-postgres
+    plan: standard
+    databaseName: fmcg_dms
+    user: fmcg_user
+

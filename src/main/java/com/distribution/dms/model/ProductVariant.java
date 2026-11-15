@@ -39,6 +39,10 @@ public class ProductVariant {
     @Column(nullable = false)
     private Integer reorderMin;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version = 0L;
+
     public ProductVariant() {}
 
     public ProductVariant(String sku, String productLine, String variantLabel, String category,
@@ -87,4 +91,6 @@ public class ProductVariant {
     public void setOnHand(Integer onHand) { this.onHand = onHand; }
     public Integer getReorderMin() { return reorderMin; }
     public void setReorderMin(Integer reorderMin) { this.reorderMin = reorderMin; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 }

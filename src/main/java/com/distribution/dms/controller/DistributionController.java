@@ -5,10 +5,13 @@ import com.distribution.dms.model.SaleTransaction;
 import com.distribution.dms.model.StockMovement;
 import com.distribution.dms.service.DistributionService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -16,9 +19,15 @@ import java.util.Map;
 @RequestMapping("/api")
 public class DistributionController {
     private final DistributionService service;
+    private final java.nio.file.Path uploadDir;
 
-    public DistributionController(DistributionService service) {
+    private static final java.util.Set<String> ALLOWED_EXTENSIONS = java.util.Set.of(".png", ".jpg", ".jpeg", ".webp");
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+    public DistributionController(DistributionService service,
+                                   @Value("${app.upload.dir:uploads/screenshots}") String uploadDirProperty) {
         this.service = service;
+        this.uploadDir = java.nio.file.Paths.get(uploadDirProperty).toAbsolutePath().normalize();
     }
 
     // ──────────────────────────── HELPER ────────────────────────────
@@ -31,12 +40,27 @@ public class DistributionController {
         return "ADMIN".equals(session.getAttribute("role"));
     }
 
+    private boolean canAddStock(HttpSession session) {
+        return "ADMIN".equals(session.getAttribute("role")) || Boolean.TRUE.equals(session.getAttribute("canAddStock"));
+    }
+
     private ResponseEntity<?> unauthorized() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
     }
 
     private ResponseEntity<?> forbidden() {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin access required"));
+    }
+
+    private boolean isPasswordChangeRequired(HttpSession session) {
+        return Boolean.TRUE.equals(session.getAttribute("mustChangePassword"));
+    }
+
+    private ResponseEntity<?> passwordChangeRequired() {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "error", "Password change required before accessing application",
+                "mustChangePassword", true
+        ));
     }
 
     private Map<String, Object> sanitizeSaleForAgent(SaleTransaction s) {
@@ -50,6 +74,8 @@ public class DistributionController {
         map.put("quantity", s.getQuantity());
         map.put("unitSellPrice", s.getUnitSellPrice());
         map.put("totalAmount", s.getTotalAmount());
+        map.put("amountPaid", s.getEffectiveAmountPaid());
+        map.put("remainingBalance", s.getRemainingBalance());
         map.put("paymentMethod", s.getPaymentMethod());
         map.put("paymentRef", s.getPaymentRef());
         map.put("creditCleared", s.isCreditCleared());
@@ -84,6 +110,7 @@ public class DistributionController {
     @GetMapping("/variants")
     public ResponseEntity<?> getVariants(HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
         List<ProductVariant> variants = service.listCatalog();
         if (isAdmin(session)) {
             return ResponseEntity.ok(variants);
@@ -109,6 +136,7 @@ public class DistributionController {
     @PostMapping("/variants")
     public ResponseEntity<?> createVariant(@RequestBody ProductVariant variant, HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
         if (!isAdmin(session)) return forbidden();
         variant.setWarehouse("Main Warehouse");
         return ResponseEntity.status(HttpStatus.CREATED).body(service.registerVariant(variant));
@@ -120,6 +148,7 @@ public class DistributionController {
     @DeleteMapping("/variants/{sku}")
     public ResponseEntity<?> deleteVariant(@PathVariable String sku, HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
         if (!isAdmin(session)) return forbidden();
         try {
             service.deleteVariant(sku);
@@ -130,17 +159,24 @@ public class DistributionController {
     }
 
     /**
-     * POST /api/variants/{sku}/stock-in — ADMIN only: receive factory batch
+     * POST /api/variants/{sku}/stock-in — ADMIN or authorized agent with canAddStock permission
      */
     @PostMapping("/variants/{sku}/stock-in")
     public ResponseEntity<?> stockIn(@PathVariable String sku,
                                      @RequestBody Map<String, Object> body,
                                      HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
-        if (!isAdmin(session)) return forbidden();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
+        if (!canAddStock(session)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Access denied: Stock-in permission required"));
+        }
         int qty = ((Number) body.getOrDefault("quantity", 0)).intValue();
         String note = (String) body.getOrDefault("note", "Factory Batch");
-        return ResponseEntity.ok(service.receiveFactoryStock(sku, qty, note));
+        String performedBy = (String) session.getAttribute("fullName");
+        if (performedBy == null || performedBy.isBlank()) {
+            performedBy = isAdmin(session) ? "System Administrator" : (String) session.getAttribute("username");
+        }
+        return ResponseEntity.ok(service.receiveFactoryStock(sku, qty, note, performedBy));
     }
 
     // ──────────────────────────── SALES ────────────────────────────
@@ -154,6 +190,7 @@ public class DistributionController {
     @GetMapping("/sales")
     public ResponseEntity<?> getSales(HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
         List<SaleTransaction> all = service.listSales();
         if (isAdmin(session)) {
             return ResponseEntity.ok(all);
@@ -176,6 +213,7 @@ public class DistributionController {
     public ResponseEntity<?> recordSale(@RequestBody Map<String, Object> payload,
                                         HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
         String role = (String) session.getAttribute("role");
         String agentName;
         if ("ADMIN".equals(role)) {
@@ -188,55 +226,74 @@ public class DistributionController {
             agentName = (String) session.getAttribute("fullName");
         }
         String paymentScreenshotPath = (String) payload.getOrDefault("paymentScreenshotPath", null);
-        SaleTransaction sale = service.recordAgentSale(
-                (String) payload.get("sku"),
-                ((Number) payload.get("quantity")).intValue(),
-                (String) payload.getOrDefault("customerName", ""),
-                (String) payload.getOrDefault("customerPhone", ""),
-                (String) payload.getOrDefault("customerArea", ""),
-                (String) payload.getOrDefault("paymentMethod", "CASH"),
-                (String) payload.getOrDefault("paymentRef", ""),
-                paymentScreenshotPath,
-                agentName
-        );
-        if ("ADMIN".equals(role)) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(sale);
+        try {
+            SaleTransaction sale = service.recordAgentSale(
+                    (String) payload.get("sku"),
+                    ((Number) payload.get("quantity")).intValue(),
+                    (String) payload.getOrDefault("customerName", ""),
+                    (String) payload.getOrDefault("customerPhone", ""),
+                    (String) payload.getOrDefault("customerArea", ""),
+                    (String) payload.getOrDefault("paymentMethod", "CASH"),
+                    (String) payload.getOrDefault("paymentRef", ""),
+                    paymentScreenshotPath,
+                    agentName
+            );
+            if ("ADMIN".equals(role)) {
+                return ResponseEntity.status(HttpStatus.CREATED).body(sale);
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(sanitizeSaleForAgent(sale));
+        } catch (ObjectOptimisticLockingFailureException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "error", "Stock level was modified by another transaction. Please refresh and retry the sale."
+            ));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(sanitizeSaleForAgent(sale));
     }
 
     /**
      * POST /api/sales/upload-screenshot — Upload mobile banking receipt image
-     * Authenticated agents or admin.
+     * Authenticated agents or admin. Validates file type, size, and generates safe unique filenames.
      */
     @PostMapping("/sales/upload-screenshot")
     public ResponseEntity<?> uploadScreenshot(@RequestParam("file") org.springframework.web.multipart.MultipartFile file,
                                               HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "No file uploaded"));
         }
+        // Validate file size
+        if (file.getSize() > MAX_FILE_SIZE) {
+            return ResponseEntity.badRequest().body(Map.of("error", "File size exceeds 10MB limit"));
+        }
+        // Validate file extension
+        String original = file.getOriginalFilename();
+        String ext = ".png";
+        if (original != null && original.contains(".")) {
+            ext = original.substring(original.lastIndexOf(".")).toLowerCase();
+        }
+        if (!ALLOWED_EXTENSIONS.contains(ext)) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Unsupported file type. Allowed: PNG, JPG, JPEG, WEBP"));
+        }
         try {
-            java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads", "screenshots").toAbsolutePath().normalize();
             if (!java.nio.file.Files.exists(uploadDir)) {
                 java.nio.file.Files.createDirectories(uploadDir);
             }
-            String original = file.getOriginalFilename();
-            String ext = ".png";
-            if (original != null && original.contains(".")) {
-                ext = original.substring(original.lastIndexOf(".")).toLowerCase();
-            }
             String filename = "pay_" + System.currentTimeMillis() + "_" + java.util.UUID.randomUUID().toString().substring(0, 8) + ext;
-            java.nio.file.Path targetPath = uploadDir.resolve(filename);
+            java.nio.file.Path targetPath = uploadDir.resolve(filename).normalize();
+            // Verify target is within upload directory (prevent path traversal)
+            if (!targetPath.startsWith(uploadDir)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid filename"));
+            }
             try (java.io.InputStream in = file.getInputStream()) {
                 java.nio.file.Files.copy(in, targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }
-
             String url = "/api/screenshots/" + filename;
-            return ResponseEntity.ok(Map.of(
-                    "filename", filename,
-                    "url", url
-            ));
+            return ResponseEntity.ok(Map.of("filename", filename, "url", url));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to save screenshot: " + e.getMessage()));
@@ -251,6 +308,7 @@ public class DistributionController {
                                               @RequestBody Map<String, String> body,
                                               HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
         String path = body.get("screenshotPath");
         if (path == null || path.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "screenshotPath is required"));
@@ -275,13 +333,14 @@ public class DistributionController {
     @GetMapping("/screenshots/{filename:.+}")
     public ResponseEntity<?> getScreenshot(@PathVariable String filename, HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
         // Prevent path traversal
         if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
             return ResponseEntity.badRequest().build();
         }
         try {
-            java.nio.file.Path filePath = java.nio.file.Paths.get("uploads", "screenshots").toAbsolutePath().normalize().resolve(filename).normalize();
-            if (!java.nio.file.Files.exists(filePath)) {
+            java.nio.file.Path filePath = uploadDir.resolve(filename).normalize();
+            if (!filePath.startsWith(uploadDir) || !java.nio.file.Files.exists(filePath)) {
                 return ResponseEntity.notFound().build();
             }
             org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
@@ -297,6 +356,101 @@ public class DistributionController {
     }
 
     /**
+     * POST /api/sales/{id}/pay-credit — Record a partial or installment payment towards debtor credit
+     * Accessible by authenticated field agents and admin. Saves persistent installment transaction and optional receipt.
+     */
+    @PostMapping("/sales/{id}/pay-credit")
+    public ResponseEntity<?> payCredit(@PathVariable Long id,
+                                       @RequestBody Map<String, Object> body,
+                                       HttpSession session) {
+        if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
+
+        Number amountNum = (Number) body.get("amount");
+        if (amountNum == null || amountNum.doubleValue() <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Valid positive payment amount is required"));
+        }
+        BigDecimal amount = BigDecimal.valueOf(amountNum.doubleValue());
+        String method = (String) body.getOrDefault("paymentMethod", "CASH");
+        String note = (String) body.getOrDefault("note", "");
+        String screenshotPath = (String) body.getOrDefault("screenshotPath", null);
+
+        String agentName = (String) session.getAttribute("fullName");
+        if (agentName == null || agentName.isBlank()) {
+            agentName = (String) session.getAttribute("username");
+        }
+
+        try {
+            SaleTransaction updated = service.recordCreditPayment(id, amount, method, note, screenshotPath, agentName);
+            if (isAdmin(session)) {
+                return ResponseEntity.ok(updated);
+            }
+            return ResponseEntity.ok(sanitizeSaleForAgent(updated));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * GET /api/sales/{id}/installments — Get list of installment payments for a credit sale
+     */
+    @GetMapping("/sales/{id}/installments")
+    public ResponseEntity<?> getSaleInstallments(@PathVariable Long id, HttpSession session) {
+        if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
+
+        return ResponseEntity.ok(service.getInstallmentsForSale(id));
+    }
+
+    /**
+     * GET /api/finance/daily-collections — ADMIN only: daily real cash & mobile money collected
+     */
+    @GetMapping("/finance/daily-collections")
+    public ResponseEntity<?> getDailyCollections(@RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate startDate,
+                                                 @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate endDate,
+                                                 @RequestParam(required = false) String agent,
+                                                 @RequestParam(required = false) String paymentMethod,
+                                                 HttpSession session) {
+        if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
+        if (!isAdmin(session)) return forbidden();
+
+        return ResponseEntity.ok(service.getDailyCollections(startDate, endDate, agent, paymentMethod));
+    }
+
+    /**
+     * GET /api/stock-movements — ADMIN only: comprehensive stock-in and stock-out warehouse movements report
+     */
+    @GetMapping("/stock-movements")
+    public ResponseEntity<?> getStockMovementsReport(@RequestParam(required = false, defaultValue = "month") String range,
+                                                     @RequestParam(required = false) String category,
+                                                     @RequestParam(required = false) String sku,
+                                                     @RequestParam(required = false) String type,
+                                                     @RequestParam(required = false) String agent,
+                                                     HttpSession session) {
+        if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
+        if (!isAdmin(session)) return forbidden();
+
+        return ResponseEntity.ok(service.getStockMovementsReport(range, category, sku, type, agent));
+    }
+
+    /**
+     * GET /api/analytics/stock-movement-daily — ADMIN only: comparative daily stock in vs stock out chart data
+     */
+    @GetMapping("/analytics/stock-movement-daily")
+    public ResponseEntity<?> getDailyStockMovementChart(@RequestParam(required = false, defaultValue = "30") int days,
+                                                        @RequestParam(required = false) String sku,
+                                                        @RequestParam(required = false) String category,
+                                                        HttpSession session) {
+        if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
+        if (!isAdmin(session)) return forbidden();
+
+        return ResponseEntity.ok(service.getDailyStockMovementChart(days, sku, category));
+    }
+
+    /**
      * POST /api/sales/{id}/clear-credit — ADMIN only
      */
     @PostMapping("/sales/{id}/clear-credit")
@@ -304,6 +458,7 @@ public class DistributionController {
                                          @RequestBody Map<String, String> body,
                                          HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
         if (!isAdmin(session)) return forbidden();
         return ResponseEntity.ok(service.clearCreditSale(id, body.getOrDefault("note", "Settled")));
     }
@@ -316,6 +471,7 @@ public class DistributionController {
     @GetMapping("/analytics/monthly-profit")
     public ResponseEntity<?> getMonthlyProfit(HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
         if (!isAdmin(session)) return forbidden();
         return ResponseEntity.ok(service.getMonthlyProfitData());
     }
@@ -328,6 +484,7 @@ public class DistributionController {
     @GetMapping("/movements")
     public ResponseEntity<?> getMovements(HttpSession session) {
         if (!isAuthenticated(session)) return unauthorized();
+        if (isPasswordChangeRequired(session)) return passwordChangeRequired();
         if (!isAdmin(session)) return forbidden();
         return ResponseEntity.ok(service.listMovements());
     }

@@ -30,9 +30,14 @@ public class SaleTransaction {
     private BigDecimal unitBuySnapshot;
     private BigDecimal unitSellPrice;
     private String paymentMethod; // CASH, MOBILE_BANKING, CREDIT
+
+    @Column(columnDefinition = "TEXT")
     private String paymentRef;
     private boolean creditCleared;
     private String paymentScreenshotPath; // relative path or filename under ./uploads/screenshots/
+
+    @Column(name = "amount_paid", nullable = false)
+    private BigDecimal amountPaid = BigDecimal.ZERO;
 
     public SaleTransaction() {}
 
@@ -40,6 +45,23 @@ public class SaleTransaction {
     public BigDecimal getTotalAmount() {
         if (unitSellPrice == null || quantity == null) return BigDecimal.ZERO;
         return unitSellPrice.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    @Transient
+    public BigDecimal getRemainingBalance() {
+        if (creditCleared) return BigDecimal.ZERO;
+        BigDecimal total = getTotalAmount();
+        BigDecimal paid = amountPaid != null ? amountPaid : BigDecimal.ZERO;
+        BigDecimal remaining = total.subtract(paid);
+        return remaining.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : remaining;
+    }
+
+    @Transient
+    public BigDecimal getEffectiveAmountPaid() {
+        if (creditCleared && (amountPaid == null || amountPaid.compareTo(BigDecimal.ZERO) == 0)) {
+            return getTotalAmount();
+        }
+        return amountPaid != null ? amountPaid : BigDecimal.ZERO;
     }
 
     @Transient
@@ -100,4 +122,6 @@ public class SaleTransaction {
     public void setCreditCleared(boolean creditCleared) { this.creditCleared = creditCleared; }
     public String getPaymentScreenshotPath() { return paymentScreenshotPath; }
     public void setPaymentScreenshotPath(String paymentScreenshotPath) { this.paymentScreenshotPath = paymentScreenshotPath; }
+    public BigDecimal getAmountPaid() { return amountPaid != null ? amountPaid : BigDecimal.ZERO; }
+    public void setAmountPaid(BigDecimal amountPaid) { this.amountPaid = amountPaid; }
 }

@@ -3,6 +3,7 @@ package com.distribution.dms.repository;
 import com.distribution.dms.model.SaleTransaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface SaleTransactionRepository extends JpaRepository<SaleTransaction, Long> {
@@ -28,4 +29,11 @@ public interface SaleTransactionRepository extends JpaRepository<SaleTransaction
 
     /** Agent-scoped sales by exact agentName */
     List<SaleTransaction> findByAgentName(String agentName);
+
+    /** Count of sales recorded by an agent (used for deletion safety checks) */
+    long countByAgentName(String agentName);
+
+    /** Count of sales associated with a SKU snapshot or variant */
+    @Query("SELECT COUNT(s) FROM SaleTransaction s WHERE s.skuSnapshot = :sku OR (s.variant IS NOT NULL AND s.variant.sku = :sku)")
+    long countBySku(@Param("sku") String sku);
 }

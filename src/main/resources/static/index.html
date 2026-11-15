@@ -100,24 +100,57 @@
             <span>Dashboard</span>
           </button>
           <button id="tab-agent" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap" data-view="agent">
-            <span>Agent Sales Portal</span>
+            <span>Agent Portal</span>
           </button>
           <button id="tab-debtors" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap admin-only" data-view="debtors">
-            <span>Debtors &amp; Credit</span>
+            <span>Debtors Directory</span>
             <span id="nav-debtor-count" class="ml-0.5 px-1.5 py-0.2 bg-amber-500 text-slate-950 font-bold rounded text-[10px]">0</span>
           </button>
+          <button id="tab-finance" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap admin-only" data-view="finance">
+            <span>Finance &amp; Collections</span>
+          </button>
+          <button id="tab-stock-movements" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap admin-only" data-view="stock-movements">
+            <span>Stock Movements</span>
+          </button>
           <button id="tab-records" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap admin-only" data-view="records">
-            <span>Inventory Records</span>
+            <span>Inventory</span>
             <span id="nav-record-count" class="ml-0.5 px-1.5 py-0.2 bg-white/20 text-white rounded text-[10px]">0</span>
           </button>
           <button id="tab-spreadsheet" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap admin-only" data-view="spreadsheet">
             <span>Pivot Grid</span>
           </button>
+          <button id="tab-agents" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap admin-only" data-view="agents">
+            <span>Agents</span>
+            <span id="nav-agent-count" class="ml-0.5 px-1.5 py-0.2 bg-white/20 text-white rounded text-[10px]">0</span>
+          </button>
+          <button id="tab-messages" type="button" class="view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap" data-view="messages">
+            <span>Messages</span>
+            <span id="nav-msg-count" class="hidden ml-0.5 px-1.5 py-0.2 bg-rose-500 text-white font-bold rounded text-[10px]">0</span>
+          </button>
         </nav>
 
         <!-- Right: User info + actions -->
-        <div class="hidden md:flex items-center gap-1.5 shrink-0">
-          <span id="header-user-info" class="text-xs text-white/80 font-medium px-2 py-1 rounded bg-white/10"></span>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span id="header-user-info" class="text-xs text-white/80 font-medium px-2 py-1 rounded bg-white/10 hidden sm:inline-block"></span>
+
+          <!-- Notification Bell (Admin Only) -->
+          <div class="relative admin-only">
+            <button id="header-notif-bell" type="button" class="relative p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs transition" title="Activity Notifications">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+              <span id="header-notif-count" class="hidden absolute -top-1 -right-1 px-1.5 py-0.2 bg-rose-500 text-white font-bold rounded-full text-[9px] shadow-sm">0</span>
+            </button>
+            <!-- Notification Dropdown -->
+            <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 text-slate-800 overflow-hidden">
+              <div class="px-4 py-3 bg-odoo-plum text-white flex items-center justify-between">
+                <span class="text-xs font-bold tracking-wide">Real-Time Activity Alerts</span>
+                <button id="btn-notif-mark-all-read" type="button" class="text-[11px] text-white/80 hover:text-white underline">Mark all read</button>
+              </div>
+              <div id="notif-list" class="max-h-80 overflow-y-auto divide-y divide-slate-100 text-xs custom-scrollbar">
+                <div class="py-6 text-center text-slate-400">No new activity alerts.</div>
+              </div>
+            </div>
+          </div>
+
           <button id="btn-switch-role" type="button" class="admin-only px-2.5 py-1.5 rounded-md bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-semibold transition flex items-center gap-1 shadow-xs">
             <span id="role-toggle-label">Switch to Agent View</span>
           </button>
@@ -130,7 +163,7 @@
           <button id="btn-create-agent" type="button" class="admin-only px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-xs font-medium transition flex items-center gap-1">
             <span>+ New Agent</span>
           </button>
-          <button id="btn-open-change-password" type="button" class="px-2.5 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition" title="Change your password">
+          <button id="btn-open-change-password" type="button" class="admin-only px-2.5 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition" title="Change your password">
             Password
           </button>
           <button id="btn-logout" type="button" class="px-2.5 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition">
@@ -240,6 +273,32 @@
           </div>
         </div>
 
+        <!-- Replacement Chart: Daily Warehouse Stock In vs. Stock Out -->
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-semibold text-xs uppercase tracking-wider">Inventory Logistics</span>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">Daily Warehouse Stock In vs. Stock Out</h3>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Comparative bar analysis of factory inventory intake vs. dispatched agent van sales from real stock movements.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="flex items-center bg-slate-100 p-1 rounded-lg text-xs">
+                <button id="btn-chart-movements-7d" type="button" class="btn-chart-days px-2.5 py-1 rounded-md transition text-slate-600 hover:text-slate-900" data-days="7">7 Days</button>
+                <button id="btn-chart-movements-30d" type="button" class="btn-chart-days px-2.5 py-1 rounded-md transition bg-white text-indigo-700 font-semibold shadow-xs" data-days="30">30 Days</button>
+                <button id="btn-chart-movements-month" type="button" class="btn-chart-days px-2.5 py-1 rounded-md transition text-slate-600 hover:text-slate-900" data-days="60">This Month</button>
+              </div>
+              <select id="chart-movements-sku-select" class="border border-slate-300 rounded-lg px-2.5 py-1 text-xs bg-white">
+                <option value="">All Products</option>
+              </select>
+            </div>
+          </div>
+          <div class="relative h-72 w-full">
+            <canvas id="canvas-stock-in-out"></canvas>
+          </div>
+        </div>
+
         <div id="chart-grid" class="grid grid-cols-1 lg:grid-cols-12 gap-5"></div>
 
         <!-- Profit Breakdown Table -->
@@ -320,7 +379,23 @@
           </div>
         </div>
 
-        <div id="agent-kpi-strip" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        <!-- Sub-navigation tabs inside Agent Portal -->
+        <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
+          <button id="agent-subtab-sales" type="button" class="agent-subtab px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-odoo-teal text-white shadow-xs transition" data-subtab="sales">
+            <span>🛒 Sales Entry</span>
+          </button>
+          <button id="agent-subtab-debts" type="button" class="agent-subtab px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-subtab="debts">
+            <span>💳 Customer Debts</span>
+            <span id="agent-debts-count-badge" class="ml-1 px-1.5 py-0.2 bg-amber-500 text-slate-950 font-bold rounded text-[10px]">0</span>
+          </button>
+          <button id="agent-subtab-stockin" type="button" class="agent-subtab hidden px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-subtab="stockin">
+            <span>📦 Factory Stock In</span>
+          </button>
+        </div>
+
+        <!-- SUBTAB 1: Sales Entry Section -->
+        <div id="agent-section-sales" class="space-y-6">
+          <div id="agent-kpi-strip" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <!-- Log a Sale Form -->
@@ -489,33 +564,131 @@
             </div>
           </div>
         </div>
+        </div><!-- end #agent-section-sales -->
+
+        <!-- SUBTAB 2: Customer Debts Section -->
+        <div id="agent-section-debts" class="hidden space-y-6">
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold text-xs uppercase tracking-wider">Field Collections</span>
+                <h3 class="text-sm font-bold text-slate-900">Customer Debts &amp; Installment Repayments</h3>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Collect customer debts in full or little by little via partial installments with cash or mobile banking slip verification.</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-xl text-center">
+                <span class="text-[10px] uppercase tracking-wider text-amber-800 font-bold block">Assigned Debt Remaining</span>
+                <span id="agent-debt-kpi-remaining" class="text-sm sm:text-base font-bold font-mono text-amber-900">ETB 0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+            <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Assigned Customer Debt Invoices</h3>
+              <span id="agent-debt-list-count" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">0 Invoices</span>
+            </div>
+            <div class="overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <th class="py-2.5 px-4">Customer / Shop</th>
+                    <th class="py-2.5 px-4">Contact &amp; Location</th>
+                    <th class="py-2.5 px-4">Product Variant</th>
+                    <th class="py-2.5 px-4 text-right">Invoiced Total</th>
+                    <th class="py-2.5 px-4 text-right">Paid So Far</th>
+                    <th class="py-2.5 px-4 text-right">Remaining Due</th>
+                    <th class="py-2.5 px-4">Progress</th>
+                    <th class="py-2.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="agent-debts-tbody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </div><!-- end #agent-section-debts -->
+
+        <!-- SUBTAB 3: Authorized Stock Intake Section -->
+        <div id="agent-section-stockin" class="hidden space-y-6">
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold text-xs uppercase tracking-wider">Authorized Warehouse Stock-In</span>
+                <h3 class="text-sm font-bold text-slate-900">Direct Factory Stock Intake Logging</h3>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Your agent account is authorized to receive deliveries from factory trucks directly into the central warehouse inventory.</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">✓ Permission Active</span>
+          </div>
+
+          <div class="max-w-xl mx-auto bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+            <div class="px-5 py-4 bg-emerald-700 text-white flex items-center justify-between">
+              <div>
+                <h4 class="text-sm font-semibold">Log Factory Intake (Stock-In)</h4>
+                <p class="text-[11px] text-emerald-100">Stock movements will record your identity in audit records</p>
+              </div>
+              <span class="text-xs font-mono bg-emerald-800 px-2 py-0.5 rounded border border-emerald-500/50">Warehouse In</span>
+            </div>
+            <form id="form-agent-stockin" class="p-5 space-y-4 text-xs sm:text-sm">
+              <div>
+                <label for="agent-stockin-sku" class="block font-medium text-slate-700 mb-1">Product &amp; Variant SKU</label>
+                <select id="agent-stockin-sku" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-medium text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="agent-stockin-qty" class="block font-medium text-slate-700 mb-1">Quantity Received</label>
+                  <input id="agent-stockin-qty" type="number" min="1" value="50" required class="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label for="agent-stockin-note" class="block font-medium text-slate-700 mb-1">Factory Batch / Delivery Note</label>
+                  <input id="agent-stockin-note" type="text" placeholder="e.g. Factory Batch #2026-F12" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                </div>
+              </div>
+              <div id="agent-stockin-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2 font-medium"></div>
+              <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-xs transition">
+                Receive Stock &amp; Update Warehouse Inventory
+              </button>
+            </form>
+          </div>
+        </div><!-- end #agent-section-stockin -->
       </div>
 
       <!-- ==================== VIEW 3: DEBTORS ==================== -->
       <div id="view-debtors" class="hidden space-y-6">
-        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold text-xs">Accounts Receivable</span>
-              <h2 class="text-base font-bold text-slate-900">Customer Credit &amp; Debtor Follow-Up Tracker</h2>
+              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold text-xs uppercase tracking-wider">Accounts Receivable</span>
+              <h2 class="text-base font-bold text-slate-900">Debtor Credit &amp; Progressive Installment Tracker</h2>
             </div>
-            <p class="text-xs text-slate-600 mt-1">Lists all shops and supermarkets that bought on <strong>Credit</strong>. Click <strong>Mark Cleared</strong> once the customer pays.</p>
+            <p class="text-xs text-slate-600 mt-1">Track shops buying on credit. Collect debt payments in full or <strong>little by little via installments</strong> until settled.</p>
           </div>
-          <div class="flex items-center gap-4 shrink-0 bg-amber-50 border border-amber-200 px-4 py-2.5 rounded-xl">
-            <div>
-              <span class="text-[11px] uppercase tracking-wider text-amber-800 font-semibold block">Total Outstanding Credit</span>
-              <span id="debtors-total-outstanding" class="text-lg font-bold font-mono text-amber-900">ETB 0</span>
+          <div class="grid grid-cols-3 gap-3 shrink-0">
+            <div class="bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-center">
+              <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block">Total Invoiced</span>
+              <span id="debtors-total-invoiced" class="text-sm sm:text-base font-bold font-mono text-slate-800">ETB 0</span>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl text-center">
+              <span class="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold block">Paid So Far</span>
+              <span id="debtors-total-paid" class="text-sm sm:text-base font-bold font-mono text-emerald-800">ETB 0</span>
+            </div>
+            <div class="bg-amber-50 border border-amber-300 px-3.5 py-2 rounded-xl text-center">
+              <span class="text-[10px] uppercase tracking-wider text-amber-800 font-bold block">Remaining Due</span>
+              <span id="debtors-total-outstanding" class="text-sm sm:text-base font-bold font-mono text-amber-900">ETB 0</span>
             </div>
           </div>
         </div>
         <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-          <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-slate-900">Credit Sales &amp; Debtor Directory</h3>
+          <div class="px-5 py-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h3 class="text-sm font-semibold text-slate-900">Credit Invoices &amp; Installment Directory</h3>
             <div class="flex items-center gap-2 text-xs">
               <label for="debtor-filter-status" class="text-slate-500 font-medium">Show:</label>
               <select id="debtor-filter-status" class="border border-slate-300 rounded-lg px-2.5 py-1 bg-white font-medium text-slate-700">
-                <option value="unpaid">Unpaid Credit Balances Only</option>
-                <option value="all">All Credit History</option>
+                <option value="unpaid">Outstanding Debts (Unpaid &amp; Partial)</option>
+                <option value="partial">Partially Paid Installments Only</option>
+                <option value="cleared">Fully Cleared Only</option>
+                <option value="all">All Credit Sales History</option>
               </select>
             </div>
           </div>
@@ -524,16 +697,209 @@
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   <th class="py-3 px-4">Customer / Shop</th>
-                  <th class="py-3 px-4">Contact Phone &amp; Area</th>
-                  <th class="py-3 px-4">Items Bought on Credit</th>
+                  <th class="py-3 px-4">Phone &amp; Territory</th>
+                  <th class="py-3 px-4">Credit Items</th>
                   <th class="py-3 px-4">Sales Agent</th>
-                  <th class="py-3 px-4">Date &amp; Note</th>
-                  <th class="py-3 px-4 text-right">Amount Owed</th>
-                  <th class="py-3 px-4">Status</th>
-                  <th class="py-3 px-4 text-right">Follow-Up Action</th>
+                  <th class="py-3 px-4 text-right">Invoiced Amount</th>
+                  <th class="py-3 px-4 text-right">Paid So Far</th>
+                  <th class="py-3 px-4 text-right">Remaining Balance</th>
+                  <th class="py-3 px-4">Payment Progress</th>
+                  <th class="py-3 px-4 text-center">Audit &amp; Repayment History</th>
                 </tr>
               </thead>
               <tbody id="debtors-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW 3B: FINANCE & COLLECTIONS (ADMIN ONLY) ==================== -->
+      <div id="view-finance" class="hidden space-y-6">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold text-xs uppercase tracking-wider">Treasury &amp; Cash Flow</span>
+              <h2 class="text-base font-bold text-slate-900">Finance &amp; Daily Collections Ledger</h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Audit real money received (Cash vs Mobile Banking vs Debt Installments). Credit sales count as ETB 0 until collected.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-500 font-medium">Reconciled against verified bank slips and agent cash handovers.</span>
+          </div>
+        </div>
+
+        <!-- 5 KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+          <div class="bg-emerald-950 text-white rounded-xl p-4 shadow-xs flex flex-col justify-between">
+            <span class="text-[10px] uppercase tracking-wider text-emerald-300 font-bold block">Total Actual Money Received</span>
+            <div id="fin-kpi-total" class="text-lg sm:text-xl font-bold font-mono text-emerald-200 my-1">ETB 0</div>
+            <span class="text-[11px] text-emerald-400">Cash + Mobile + Debt Pay</span>
+          </div>
+          <div class="bg-white border border-slate-200 border-l-4 border-l-emerald-600 rounded-xl p-4 shadow-xs flex flex-col justify-between">
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">Direct Sales Cash</span>
+            <div id="fin-kpi-cash" class="text-lg sm:text-xl font-bold font-mono text-emerald-700 my-1">ETB 0</div>
+            <span class="text-[11px] text-slate-400">Physical handover</span>
+          </div>
+          <div class="bg-white border border-slate-200 border-l-4 border-l-sky-500 rounded-xl p-4 shadow-xs flex flex-col justify-between">
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">Direct Mobile Banking</span>
+            <div id="fin-kpi-mobile" class="text-lg sm:text-xl font-bold font-mono text-sky-700 my-1">ETB 0</div>
+            <span class="text-[11px] text-slate-400">Telebirr / CBE transfers</span>
+          </div>
+          <div class="bg-white border border-slate-200 border-l-4 border-l-indigo-600 rounded-xl p-4 shadow-xs flex flex-col justify-between">
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">Debt Installments</span>
+            <div id="fin-kpi-debt-inst" class="text-lg sm:text-xl font-bold font-mono text-indigo-700 my-1">ETB 0</div>
+            <span class="text-[11px] text-slate-400">Collected from debtors</span>
+          </div>
+          <div class="bg-white border border-slate-200 border-l-4 border-l-amber-500 rounded-xl p-4 shadow-xs flex flex-col justify-between">
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">Uncollected Credit</span>
+            <div id="fin-kpi-uncollected" class="text-lg sm:text-xl font-bold font-mono text-amber-700 my-1">ETB 0</div>
+            <span class="text-[11px] text-slate-400">Outstanding balance</span>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="text-slate-500 font-semibold">Timeframe:</label>
+            <div class="flex items-center bg-slate-100 p-0.5 rounded-lg">
+              <button type="button" class="fin-time-btn px-2.5 py-1 rounded-md transition text-slate-600 hover:text-slate-900" data-time="today">Today</button>
+              <button type="button" class="fin-time-btn px-2.5 py-1 rounded-md transition text-slate-600 hover:text-slate-900" data-time="yesterday">Yesterday</button>
+              <button type="button" class="fin-time-btn px-2.5 py-1 rounded-md transition text-slate-600 hover:text-slate-900" data-time="7d">Last 7 Days</button>
+              <button type="button" class="fin-time-btn px-2.5 py-1 rounded-md transition text-slate-600 hover:text-slate-900" data-time="month">This Month</button>
+              <button type="button" class="fin-time-btn px-2.5 py-1 rounded-md transition bg-white text-emerald-800 font-semibold shadow-xs" data-time="all">All Time</button>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-1.5">
+              <label for="fin-filter-agent" class="text-slate-500 font-medium">Agent:</label>
+              <select id="fin-filter-agent" class="border border-slate-300 rounded-lg px-2.5 py-1 bg-white font-medium text-slate-700"></select>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <label for="fin-filter-method" class="text-slate-500 font-medium">Method:</label>
+              <select id="fin-filter-method" class="border border-slate-300 rounded-lg px-2.5 py-1 bg-white font-medium text-slate-700">
+                <option value="all">All Methods</option>
+                <option value="CASH">Cash</option>
+                <option value="MOBILE_BANKING">Mobile Banking</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collections Table -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-slate-900">Actual Realized Collections Ledger</h3>
+            <span id="fin-collections-count" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">0 Transactions</span>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th class="py-2.5 px-4">Date / Time</th>
+                  <th class="py-2.5 px-4">Collection Type</th>
+                  <th class="py-2.5 px-4">Customer / Shop</th>
+                  <th class="py-2.5 px-4">Sales Agent</th>
+                  <th class="py-2.5 px-4">Payment Method</th>
+                  <th class="py-2.5 px-4 text-right">Amount Received</th>
+                  <th class="py-2.5 px-4">Ref / Note</th>
+                  <th class="py-2.5 px-4 text-center">Receipt Slip</th>
+                </tr>
+              </thead>
+              <tbody id="fin-collections-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW 3C: STOCK MOVEMENTS (ADMIN ONLY) ==================== -->
+      <div id="view-stock-movements" class="hidden space-y-6">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-semibold text-xs uppercase tracking-wider">Logistics &amp; Chain of Custody</span>
+              <h2 class="text-base font-bold text-slate-900">Stock Movement Audit Ledger</h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Complete chronological audit trail of all warehouse inventory receipts (IN) and agent van sales dispatches (OUT).</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-mov-stock-in" type="button" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition flex items-center gap-1">
+              <span>+ Factory Stock In</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3 KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-white border border-slate-200 border-l-4 border-l-emerald-600 rounded-xl p-4 shadow-xs">
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">Total Stock Inbound (Factory Receipts)</span>
+            <div id="mov-kpi-in" class="text-xl sm:text-2xl font-bold font-mono text-emerald-700 my-1">0 Cartons</div>
+            <span class="text-xs text-slate-400">Total units received into warehouse</span>
+          </div>
+          <div class="bg-white border border-slate-200 border-l-4 border-l-amber-500 rounded-xl p-4 shadow-xs">
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">Total Stock Outbound (Dispatched Sales)</span>
+            <div id="mov-kpi-out" class="text-xl sm:text-2xl font-bold font-mono text-amber-700 my-1">0 Cartons</div>
+            <span class="text-xs text-slate-400">Total units sold &amp; deducted</span>
+          </div>
+          <div class="bg-white border border-slate-200 border-l-4 border-l-odoo-plum rounded-xl p-4 shadow-xs">
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">Current Net Warehouse Balance</span>
+            <div id="mov-kpi-balance" class="text-xl sm:text-2xl font-bold font-mono text-odoo-plum my-1">0 Cartons</div>
+            <span class="text-xs text-slate-400">Current available on-hand stock</span>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1.5">
+              <label for="mov-filter-type" class="text-slate-500 font-medium">Type:</label>
+              <select id="mov-filter-type" class="border border-slate-300 rounded-lg px-2.5 py-1 bg-white font-medium text-slate-700">
+                <option value="all">All Movements</option>
+                <option value="IN">Factory Intake (IN)</option>
+                <option value="OUT">Agent Sales (OUT)</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <label for="mov-filter-category" class="text-slate-500 font-medium">Category:</label>
+              <select id="mov-filter-category" class="border border-slate-300 rounded-lg px-2.5 py-1 bg-white font-medium text-slate-700">
+                <option value="all">All Categories</option>
+                <option value="Diapers">Diapers</option>
+                <option value="Sanitary Pads">Sanitary Pads</option>
+                <option value="Wet Wipes">Wet Wipes</option>
+                <option value="Tissue Paper">Tissue Paper</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <label for="mov-filter-time" class="text-slate-500 font-medium">Timeframe:</label>
+              <select id="mov-filter-time" class="border border-slate-300 rounded-lg px-2.5 py-1 bg-white font-medium text-slate-700">
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="7d">Last 7 Days</option>
+                <option value="30d">Last 30 Days</option>
+              </select>
+            </div>
+          </div>
+          <div class="relative w-full sm:w-64">
+            <input id="mov-search-input" type="text" placeholder="Search SKU or product..." class="w-full border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-odoo-teal" />
+            <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
+          </div>
+        </div>
+
+        <!-- Movements Ledger Table -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th class="py-2.5 px-4">Date / Time</th>
+                  <th class="py-2.5 px-4">Movement</th>
+                  <th class="py-2.5 px-4">SKU &amp; Variant</th>
+                  <th class="py-2.5 px-4 text-right">Quantity</th>
+                  <th class="py-2.5 px-4">Logged / Performed By</th>
+                  <th class="py-2.5 px-4">Warehouse</th>
+                  <th class="py-2.5 px-4">Reference / Batch Note</th>
+                </tr>
+              </thead>
+              <tbody id="mov-table-body" class="divide-y divide-slate-100"></tbody>
             </table>
           </div>
         </div>
@@ -632,6 +998,120 @@
               </thead>
               <tbody id="stock-movements-tbody" class="divide-y divide-slate-100"></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW 6: AGENT MANAGEMENT (ADMIN ONLY) ==================== -->
+      <div id="view-agents" class="hidden space-y-6">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-odoo-teal text-white font-semibold text-xs uppercase tracking-wider">Territory Operations</span>
+              <h2 class="text-base font-bold text-slate-900">Field Agent Directory &amp; Account Control</h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Manage field sales representatives, route territories, secure credential resets, and account deactivation.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-agents-add-new" type="button" class="px-3.5 py-2 rounded-lg bg-odoo-teal text-white text-xs font-semibold hover:bg-odoo-tealHover flex items-center gap-1.5 shadow-xs transition">
+              <span>+ Register New Agent</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter tabs: Active, Archived / Inactive, All -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200 rounded-xl p-3 shadow-xs">
+          <div class="flex items-center gap-1.5" id="agents-filter-pills">
+            <button type="button" class="agent-filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-odoo-plum text-white transition" data-filter="active">
+              Active Agents <span id="count-active-agents" class="ml-1 px-1.5 py-0.2 bg-white/20 rounded-full text-[10px]">0</span>
+            </button>
+            <button type="button" class="agent-filter-pill px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-filter="inactive">
+              Archived / Inactive <span id="count-inactive-agents" class="ml-1 px-1.5 py-0.2 bg-slate-200 rounded-full text-[10px]">0</span>
+            </button>
+            <button type="button" class="agent-filter-pill px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-filter="all">
+              All Accounts <span id="count-total-agents" class="ml-1 px-1.5 py-0.2 bg-slate-200 rounded-full text-[10px]">0</span>
+            </button>
+          </div>
+          <div class="relative w-full sm:w-64">
+            <input id="agents-search-input" type="text" placeholder="Search by name, route, or username..." class="w-full border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-odoo-teal" />
+            <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
+          </div>
+        </div>
+
+        <!-- Agents Table -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[11px] font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-4">Agent Name</th>
+                  <th class="py-3 px-4">Username</th>
+                  <th class="py-3 px-4">Assigned Route / Territory</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-center">Stock Intake</th>
+                  <th class="py-3 px-4 text-center">Historical Sales</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="agents-table-body" class="divide-y divide-slate-100">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW 7: IN-APP MESSAGING ==================== -->
+      <div id="view-messages" class="hidden space-y-4">
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-odoo-plum"></span>
+            <h2 class="text-sm font-semibold text-slate-900">In-App Operations Messaging</h2>
+            <span class="text-xs text-slate-500 hidden sm:inline">&mdash; Direct coordination between HQ Admin and Field Sales Agents</span>
+          </div>
+          <span id="msg-view-status" class="text-xs font-mono text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded">● Online</span>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden flex h-[580px]">
+          <!-- Left: Agent list (Admin Only) -->
+          <div id="msg-admin-sidebar" class="admin-only w-72 sm:w-80 border-r border-slate-200 flex flex-col bg-slate-50 shrink-0">
+            <div class="p-3 border-b border-slate-200 bg-white">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Field Agents</h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">Select an agent to open conversation</p>
+            </div>
+            <div id="msg-conversations-list" class="flex-1 overflow-y-auto divide-y divide-slate-100 text-xs custom-scrollbar">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Right / Main: Chat Thread -->
+          <div class="flex-1 flex flex-col bg-white">
+            <!-- Thread Header -->
+            <div class="p-3.5 border-b border-slate-200 bg-slate-50/60 flex items-center justify-between shrink-0">
+              <div class="flex items-center gap-2.5">
+                <div id="msg-thread-avatar" class="w-8 h-8 rounded-full bg-odoo-plum text-white font-bold text-xs flex items-center justify-center">HQ</div>
+                <div>
+                  <h3 id="msg-thread-title" class="text-xs font-bold text-slate-900">Headquarters Admin</h3>
+                  <p id="msg-thread-subtitle" class="text-[11px] text-slate-500">Warehouse coordination &amp; approvals</p>
+                </div>
+              </div>
+              <button id="btn-msg-refresh-thread" type="button" class="text-xs text-slate-500 hover:text-odoo-plum px-2 py-1 rounded transition" title="Refresh conversation">↻ Refresh</button>
+            </div>
+
+            <!-- Messages Stream -->
+            <div id="msg-thread-stream" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30 text-xs custom-scrollbar">
+              <div class="text-center text-slate-400 py-12">Loading messages...</div>
+            </div>
+
+            <!-- Message Input Form -->
+            <form id="form-send-message" class="p-3 border-t border-slate-200 bg-white flex items-center gap-2 shrink-0">
+              <input id="msg-input-content" type="text" placeholder="Type a message to coordinate route, delivery, or stock..." class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-odoo-teal" required autocomplete="off" />
+              <button type="submit" id="btn-msg-send" class="px-4 py-2 bg-odoo-teal hover:bg-odoo-tealHover text-white font-semibold text-xs rounded-lg transition shadow-xs flex items-center gap-1">
+                <span>Send</span>
+                <span>➤</span>
+              </button>
+            </form>
           </div>
         </div>
       </div>
@@ -758,6 +1238,10 @@
           <label for="agent-route" class="block font-medium text-slate-700 mb-1">Route / Territory</label>
           <input id="agent-route" type="text" placeholder="e.g. Gerji &amp; Ayat Route" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
         </div>
+        <div class="flex items-center gap-2 pt-1">
+          <input id="agent-can-add-stock" type="checkbox" class="rounded border-slate-300 text-odoo-teal focus:ring-odoo-teal" />
+          <label for="agent-can-add-stock" class="text-xs text-slate-700 font-medium cursor-pointer">Allow this agent to log factory stock intake (Stock In)</label>
+        </div>
         <div id="create-agent-error" class="hidden text-xs text-rose-600 font-medium bg-rose-50 border border-rose-200 rounded-lg px-3 py-2"></div>
         <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
           <button id="btn-cancel-create-agent" type="button" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
@@ -796,6 +1280,216 @@
           <button type="submit" class="px-4 py-2 rounded-lg bg-odoo-plum text-white font-semibold hover:bg-odoo-plumDark">Update Password</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: EDIT AGENT DETAILS ==================== -->
+  <div id="modal-edit-agent" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden">
+      <div class="px-5 py-4 bg-odoo-plum text-white flex items-center justify-between">
+        <h3 class="text-sm font-semibold">Edit Field Agent Territory &amp; Profile</h3>
+        <button id="btn-close-edit-agent" type="button" class="text-white/80 hover:text-white text-lg leading-none">&times;</button>
+      </div>
+      <form id="form-edit-agent" class="p-5 space-y-3.5 text-xs sm:text-sm">
+        <input id="edit-agent-id" type="hidden" />
+        <div>
+          <label for="edit-agent-username" class="block font-medium text-slate-700 mb-1">Username (Read-only)</label>
+          <input id="edit-agent-username" type="text" readonly class="w-full bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono text-slate-500 cursor-not-allowed" />
+        </div>
+        <div>
+          <label for="edit-agent-fullname" class="block font-medium text-slate-700 mb-1">Full Name</label>
+          <input id="edit-agent-fullname" type="text" required placeholder="e.g. Dawit Mekonnen" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
+        </div>
+        <div>
+          <label for="edit-agent-route" class="block font-medium text-slate-700 mb-1">Assigned Route / Territory</label>
+          <input id="edit-agent-route" type="text" placeholder="e.g. Bole &amp; CMC Route" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5" />
+        </div>
+        <div class="flex items-center gap-2 pt-1">
+          <input id="edit-agent-can-add-stock" type="checkbox" class="rounded border-slate-300 text-odoo-teal focus:ring-odoo-teal" />
+          <label for="edit-agent-can-add-stock" class="text-xs text-slate-700 font-medium cursor-pointer">Allow this agent to log factory stock intake (Stock In)</label>
+        </div>
+        <div id="edit-agent-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2 font-medium"></div>
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btn-cancel-edit-agent" type="button" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-odoo-plum text-white font-semibold hover:bg-odoo-plumDark">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: RESET AGENT PASSWORD (ADMIN) ==================== -->
+  <div id="modal-reset-agent-pwd" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full overflow-hidden">
+      <div class="px-5 py-4 bg-amber-600 text-white flex items-center justify-between">
+        <h3 class="text-sm font-semibold">Reset Agent Password</h3>
+        <button id="btn-close-reset-agent-pwd" type="button" class="text-white/80 hover:text-white text-lg leading-none">&times;</button>
+      </div>
+      <form id="form-reset-agent-pwd" class="p-5 space-y-3.5 text-xs sm:text-sm">
+        <input id="reset-agent-id" type="hidden" />
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Agent</label>
+          <div id="reset-agent-display-name" class="font-semibold text-slate-800 text-sm"></div>
+        </div>
+        <div>
+          <label for="reset-agent-new-password" class="block font-medium text-slate-700 mb-1">New Temporary Password</label>
+          <input id="reset-agent-new-password" type="password" required minlength="8" placeholder="Min 8 chars (letters &amp; numbers)" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono" />
+        </div>
+        <div class="flex items-center gap-2 pt-1">
+          <input id="reset-agent-force-change" type="checkbox" checked class="rounded border-slate-300 text-odoo-teal focus:ring-odoo-teal" />
+          <label for="reset-agent-force-change" class="text-xs text-slate-700 font-medium cursor-pointer">Require password change on next login</label>
+        </div>
+        <div id="reset-agent-pwd-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2 font-medium"></div>
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btn-cancel-reset-agent-pwd" type="button" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-amber-600 text-white font-semibold hover:bg-amber-700">Set Temporary Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CONFIRM AGENT DELETION ==================== -->
+  <div id="modal-confirm-delete-agent" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-sm w-full overflow-hidden">
+      <div class="px-5 py-4 bg-rose-600 text-white flex items-center justify-between">
+        <h3 class="text-sm font-semibold">Delete Agent Account</h3>
+        <button id="btn-close-confirm-delete-agent" type="button" class="text-white/80 hover:text-white text-lg leading-none">&times;</button>
+      </div>
+      <div class="p-5 space-y-3.5 text-xs sm:text-sm">
+        <input id="delete-agent-id" type="hidden" />
+        <div id="delete-agent-warning-text" class="text-slate-700"></div>
+        <div id="delete-agent-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2 font-medium"></div>
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btn-cancel-delete-agent" type="button" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+          <button id="btn-execute-delete-agent" type="button" class="px-4 py-2 rounded-lg bg-rose-600 text-white font-semibold hover:bg-rose-700">Permanently Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: RECORD CREDIT INSTALLMENT PAYMENT ==================== -->
+  <div id="modal-pay-credit" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden">
+      <div class="px-5 py-4 bg-amber-600 text-white flex items-center justify-between">
+        <h3 class="text-sm font-semibold flex items-center gap-1.5">
+          <span>💵 Record Customer Debt Installment</span>
+        </h3>
+        <button id="btn-close-pay-credit" type="button" class="text-white/80 hover:text-white text-lg leading-none">&times;</button>
+      </div>
+      <form id="form-pay-credit" class="p-5 space-y-3.5 text-xs sm:text-sm">
+        <input id="pay-credit-sale-id" type="hidden" />
+
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-amber-900 font-medium">Customer:</span>
+            <span id="pay-credit-customer-name" class="font-bold text-slate-900 text-xs"></span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-600">Product / Invoice:</span>
+            <span id="pay-credit-product-label" class="font-mono text-slate-700 text-xs"></span>
+          </div>
+          <div class="flex items-center justify-between border-t border-amber-200/60 pt-1.5">
+            <span class="text-xs text-slate-600">Total Invoice:</span>
+            <span id="pay-credit-total-amount" class="font-mono font-semibold text-slate-900"></span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-emerald-700">Already Paid:</span>
+            <span id="pay-credit-already-paid" class="font-mono font-semibold text-emerald-700"></span>
+          </div>
+          <div class="flex items-center justify-between font-bold text-amber-900 pt-0.5">
+            <span>Remaining Due:</span>
+            <span id="pay-credit-remaining-due" class="font-mono text-sm text-amber-900"></span>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="pay-credit-amount" class="font-medium text-slate-700">Payment Amount (ETB)</label>
+            <button id="btn-pay-credit-full-amount" type="button" class="text-[11px] text-odoo-teal hover:underline font-semibold">Pay Full Remaining</button>
+          </div>
+          <input id="pay-credit-amount" type="number" step="0.01" min="1" required placeholder="e.g. 1500" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="pay-credit-method" class="block font-medium text-slate-700 mb-1">Payment Method</label>
+            <select id="pay-credit-method" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs">
+              <option value="CASH">Cash Collection</option>
+              <option value="MOBILE_BANKING">Mobile Banking (Telebirr/CBE)</option>
+            </select>
+          </div>
+          <div>
+            <label for="pay-credit-note" class="block font-medium text-slate-700 mb-1">Ref / Receipt #</label>
+            <input id="pay-credit-note" type="text" placeholder="e.g. Receipt #1049" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs" />
+          </div>
+        </div>
+
+        <div id="pay-credit-slip-section" class="hidden space-y-2 p-3 bg-sky-50 rounded-lg border border-sky-200 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-sky-950">Mobile Banking Transfer Slip / Screenshot</span>
+            <span class="text-[10px] text-sky-700 bg-sky-100 px-1.5 py-0.5 rounded">Optional</span>
+          </div>
+          <input type="file" id="pay-credit-slip-input" accept="image/*" class="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-sky-600 file:text-white hover:file:bg-sky-700" />
+          <input type="hidden" id="pay-credit-slip-path" value="" />
+          <div id="pay-credit-slip-status" class="hidden text-emerald-700 font-medium text-[11px]">✓ Screenshot uploaded</div>
+        </div>
+
+        <div id="pay-credit-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2 font-medium"></div>
+
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button id="btn-cancel-pay-credit" type="button" class="px-3.5 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-amber-600 text-white font-semibold hover:bg-amber-700 shadow-xs">Record Installment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: INSTALLMENT PAYMENT HISTORY ==================== -->
+  <div id="modal-installment-history" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-2xl w-full overflow-hidden flex flex-col max-h-[85vh]">
+      <div class="px-5 py-3.5 bg-odoo-plum text-white flex items-center justify-between shrink-0">
+        <h3 class="text-sm font-semibold flex items-center gap-1.5">
+          <span>📜 Customer Debt Repayment History</span>
+        </h3>
+        <button id="btn-close-installment-history" type="button" class="text-white/80 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+      <div class="p-5 overflow-y-auto custom-scrollbar space-y-4">
+        <div id="history-modal-summary" class="grid grid-cols-3 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-center">
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-semibold">Total Invoiced</span>
+            <span id="history-summary-invoiced" class="text-sm font-bold font-mono text-slate-800">ETB 0</span>
+          </div>
+          <div>
+            <span class="text-emerald-700 block text-[10px] uppercase font-semibold">Total Paid</span>
+            <span id="history-summary-paid" class="text-sm font-bold font-mono text-emerald-700">ETB 0</span>
+          </div>
+          <div>
+            <span class="text-amber-800 block text-[10px] uppercase font-semibold">Remaining Due</span>
+            <span id="history-summary-due" class="text-sm font-bold font-mono text-amber-900">ETB 0</span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <th class="py-2.5 px-3">Date &amp; Time</th>
+                <th class="py-2.5 px-3 text-right">Amount Paid</th>
+                <th class="py-2.5 px-3">Method</th>
+                <th class="py-2.5 px-3">Collected By</th>
+                <th class="py-2.5 px-3">Reference / Note</th>
+                <th class="py-2.5 px-3 text-right">Remaining</th>
+                <th class="py-2.5 px-3 text-center">Slip</th>
+              </tr>
+            </thead>
+            <tbody id="history-modal-tbody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end shrink-0">
+        <button id="btn-done-installment-history" type="button" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition">
+          Close Window
+        </button>
+      </div>
     </div>
   </div>
 
@@ -933,13 +1627,24 @@
 
     // ── State ──
     const state = {
-      session: null,       // { username, fullName, role, routeName }
+      session: null,       // { username, fullName, role, routeName, canAddStock }
       variants: [],        // from /api/variants
       sales: [],           // from /api/sales
       movements: [],       // from /api/movements
       agentList: [],       // from /api/auth/agents (admin only)
       activeView: 'dashboard',
+      activeAgentSubtab: 'sales',
+      selectedConversation: null,
+      notifications: [],
+      unreadNotifCount: 0,
+      unreadMsgCount: 0,
+      financeFilter: { timeframe: 'all', agent: 'all', method: 'all' },
+      movementsFilter: { type: 'all', category: 'all', timeframe: 'all', search: '' },
+      chartDays: 30,
+      chartSku: '',
       searchModel: { search: '', category: 'all', status: 'all', drillDown: null },
+      agentFilter: 'active',
+      agentSearch: '',
       recordsGroupBy: 'category',
       pivotMeasure: 'valuation',
       chartInstances: {}
@@ -980,6 +1685,11 @@
       me: ()           => api('GET',  '/api/auth/me'),
       agents: ()       => api('GET',  '/api/auth/agents'),
       createAgent: (d) => api('POST', '/api/auth/create-agent', d),
+      updateAgent: (id, d) => api('PUT', `/api/auth/agents/${id}`, d),
+      deactivateAgent: (id) => api('POST', `/api/auth/agents/${id}/deactivate`),
+      reactivateAgent: (id) => api('POST', `/api/auth/agents/${id}/reactivate`),
+      deleteAgent: (id) => api('DELETE', `/api/auth/agents/${id}`),
+      resetAgentPassword: (id, p, force = true) => api('POST', `/api/auth/agents/${id}/reset-password`, { newPassword: p, forceChangeOnNextLogin: String(force) }),
       resetPassword: (u, p, force = true) => api('POST', '/api/auth/reset-password', { username: u, newPassword: p, forceChangeOnNextLogin: String(force) }),
       changePassword: (cp, np) => api('POST', '/api/auth/change-password', { currentPassword: cp, newPassword: np }),
       variants: ()     => api('GET',  '/api/variants'),
@@ -988,7 +1698,8 @@
       stockIn: (sku,q,n)=>api('POST', `/api/variants/${encodeURIComponent(sku)}/stock-in`, { quantity: q, note: n }),
       sales: ()        => api('GET',  '/api/sales'),
       recordSale: (d)  => api('POST', '/api/sales', d),
-      clearCredit:(id) => api('POST', `/api/sales/${id}/clear-credit`, { note: 'Settled via Admin' }),
+      clearCredit:(id) => api('POST', `/api/sales/${id}/clear-credit`, { note: 'Settled in Full' }),
+      payCredit: (id, amount, method, note, screenshotPath) => api('POST', `/api/sales/${id}/pay-credit`, { amount: Number(amount), paymentMethod: method, note, screenshotPath }),
       movements: ()    => api('GET',  '/api/movements'),
       monthlyProfit: () => api('GET', '/api/analytics/monthly-profit'),
       uploadScreenshot: async (file) => {
@@ -1004,6 +1715,39 @@
         return data;
       },
       attachScreenshot: (id, path) => api('POST', `/api/sales/${id}/screenshot`, { screenshotPath: path }),
+      notifications: () => api('GET', '/api/notifications'),
+      unreadNotificationsCount: () => api('GET', '/api/notifications/unread-count'),
+      markNotificationRead: (id) => api('POST', `/api/notifications/${id}/read`),
+      markAllNotificationsRead: () => api('POST', '/api/notifications/mark-all-read'),
+      conversations: () => api('GET', '/api/messages/conversations'),
+      messageThread: (withUser) => api('GET', `/api/messages/thread?with=${encodeURIComponent(withUser)}`),
+      sendMessage: (recipientUsername, content) => api('POST', '/api/messages/send', { recipientUsername, content }),
+      markMessagesRead: (sender) => api('POST', `/api/messages/read?sender=${encodeURIComponent(sender)}`),
+      unreadMessagesCount: () => api('GET', '/api/messages/unread-count'),
+      dailyCollections: (startDate, endDate, agentName, paymentMethod) => {
+        const p = new URLSearchParams();
+        if (startDate) p.append('startDate', startDate);
+        if (endDate) p.append('endDate', endDate);
+        if (agentName && agentName !== 'all') p.append('agentName', agentName);
+        if (paymentMethod && paymentMethod !== 'all') p.append('paymentMethod', paymentMethod);
+        return api('GET', `/api/finance/daily-collections?${p.toString()}`);
+      },
+      stockMovementsReport: (sku, type, category, startDate, endDate) => {
+        const p = new URLSearchParams();
+        if (sku) p.append('sku', sku);
+        if (type && type !== 'all') p.append('type', type);
+        if (category && category !== 'all') p.append('category', category);
+        if (startDate) p.append('startDate', startDate);
+        if (endDate) p.append('endDate', endDate);
+        return api('GET', `/api/stock-movements?${p.toString()}`);
+      },
+      stockMovementDailyChart: (days, sku) => {
+        const p = new URLSearchParams();
+        if (days) p.append('days', days);
+        if (sku) p.append('sku', sku);
+        return api('GET', `/api/analytics/stock-movement-daily?${p.toString()}`);
+      },
+      installments: (saleId) => api('GET', `/api/sales/${saleId}/installments`),
     };
 
     // ── Auth ──
@@ -1045,7 +1789,16 @@
         switchView('agent');
       } else {
         switchView('dashboard');
+        fetchNotifications();
+        setupNotificationsSSE();
       }
+      updateUnreadMessageBadge();
+      clearInterval(window.__pollNotifsTimer);
+      window.__pollNotifsTimer = setInterval(() => {
+        if (state.session?.role === 'ADMIN') fetchNotifications();
+        updateUnreadMessageBadge();
+      }, 20000);
+
       if (state.session.mustChangePassword) {
         showChangePasswordModal(true);
       }
@@ -1087,6 +1840,16 @@
         } else {
           roleBadge.textContent = 'Field Agent Mode';
           roleBadge.className = 'hidden xl:inline-block text-[11px] bg-amber-400/25 border border-amber-300/40 text-amber-100 px-2 py-0.5 rounded-full font-medium';
+        }
+      }
+
+      // Check agent stock-in capability
+      const subtabStockIn = document.getElementById('agent-subtab-stockin');
+      if (subtabStockIn) {
+        if (isAdmin || state.session?.canAddStock) {
+          subtabStockIn.classList.remove('hidden');
+        } else {
+          subtabStockIn.classList.add('hidden');
         }
       }
     }
@@ -1163,19 +1926,23 @@
     // ── Navigation ──
 
     function switchView(v) {
-      if (state.session?.role === 'AGENT' && v !== 'agent') {
+      if (state.session?.mustChangePassword) {
+        showChangePasswordModal(true);
+        return;
+      }
+      if (state.session?.role === 'AGENT' && v !== 'agent' && v !== 'messages') {
         v = 'agent';
-        showToast('Restricted: Field agents can only access the Agent Sales Portal.', true);
+        showToast('Restricted: Field agents can only access the Agent Portal and Messages.', true);
       }
       state.activeView = v;
-      ['dashboard', 'agent', 'debtors', 'spreadsheet', 'records'].forEach(name => {
+      ['dashboard', 'agent', 'debtors', 'finance', 'stock-movements', 'spreadsheet', 'records', 'agents', 'messages'].forEach(name => {
         const el = document.getElementById(`view-${name}`);
         if (el) el.classList.toggle('hidden', name !== v);
       });
       document.querySelectorAll('.view-tab').forEach(btn => {
         const targetView = btn.getAttribute('data-view');
         const active = targetView === v;
-        const isAdminOnly = targetView !== 'agent';
+        const isAdminOnly = targetView !== 'agent' && targetView !== 'messages';
         btn.className = (active
           ? 'view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 bg-white text-odoo-plum font-semibold shadow-sm whitespace-nowrap'
           : 'view-tab px-2.5 py-1.5 rounded-md transition flex items-center gap-1.5 text-white/85 hover:text-white whitespace-nowrap')
@@ -1210,8 +1977,12 @@
       if (state.activeView === 'dashboard') renderDashboardView();
       if (state.activeView === 'agent')     renderAgentView();
       if (state.activeView === 'debtors')   renderDebtorsView();
+      if (state.activeView === 'finance')   renderFinanceView();
+      if (state.activeView === 'stock-movements') renderStockMovementsView();
       if (state.activeView === 'spreadsheet') renderSpreadsheetView();
       if (state.activeView === 'records')   renderRecordsView();
+      if (state.activeView === 'agents')    renderAgentsView();
+      if (state.activeView === 'messages')  renderMessagesView();
     }
 
     // ── Search Facets ──
@@ -1237,6 +2008,8 @@
       if (state.searchModel.drillDown) document.getElementById('drilldown-text').textContent = `Active Drill-Down: ${state.searchModel.drillDown.label}`;
       document.getElementById('nav-record-count').textContent = filterVariants().length;
       document.getElementById('nav-debtor-count').textContent = state.sales.filter(s => s.paymentMethod === 'CREDIT' && !s.creditCleared).length;
+      const navAgentEl = document.getElementById('nav-agent-count');
+      if (navAgentEl) navAgentEl.textContent = state.agentList.filter(a => a.active).length;
     }
 
     // ── Dashboard View ──
@@ -1265,8 +2038,7 @@
       { id: 'kpi-pot',  kind: 'kpi', title: 'Potential Stock Profit',  metric: 'potentialProfit:sum', format: 'currency', subtitle: 'Sell - Buy across all stock', accent: 'teal' },
       { id: 'kpi-low',  kind: 'kpi', title: 'Low & Out of Stock',       metric: 'lowStockCount:custom', format: 'alert',    subtitle: 'Variants below reorder min',  accent: 'amber' },
       { id: 'kpi-hand', kind: 'kpi', title: 'Cartons / Bales On Hand',  metric: 'onHand:sum',     format: 'number',   subtitle: 'All products in warehouse',  accent: 'indigo' },
-      { id: 'chart-cat-profit', kind: 'chart', chartType: 'bar',      title: 'Potential Profit by Category (ETB)', metric: 'potentialProfit:sum', groupBy: 'category', colSpan: 6 },
-      { id: 'chart-cat-stock',  kind: 'chart', chartType: 'doughnut', title: 'Stock Units by Category',             metric: 'onHand:sum',          groupBy: 'category', colSpan: 6 },
+      { id: 'chart-cat-stock',  kind: 'chart', chartType: 'doughnut', title: 'Stock Units by Category',             metric: 'onHand:sum',          groupBy: 'category', colSpan: 12 },
     ];
 
     let widgets = JSON.parse(JSON.stringify(DEFAULT_WIDGETS));
@@ -1410,6 +2182,7 @@
         });
       }
       renderMonthlyProfitChart();
+      renderStockMovementChart(state.chartDays, state.chartSku);
     }
 
     async function renderMonthlyProfitChart() {
@@ -1554,6 +2327,668 @@
           }
         }
       });
+    }
+
+    // ── Daily Stock In vs Out Chart ──
+    async function renderStockMovementChart(days = 30, sku = '') {
+      const canvas = document.getElementById('canvas-stock-in-out');
+      if (!canvas) return;
+      if (state.chartInstances['stock-in-out']) {
+        state.chartInstances['stock-in-out'].destroy();
+        state.chartInstances['stock-in-out'] = null;
+      }
+
+      const skuSel = document.getElementById('chart-movements-sku-select');
+      if (skuSel && skuSel.options.length <= 1) {
+        skuSel.innerHTML = '<option value="">All Products</option>';
+        getVariants().forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.sku;
+          opt.textContent = `${v.sku} - ${v.productLine} (${v.variantLabel})`;
+          skuSel.appendChild(opt);
+        });
+        if (sku) skuSel.value = sku;
+      }
+
+      let data = [];
+      try {
+        data = await API.stockMovementDailyChart(days, sku);
+      } catch (e) {
+        console.error('Failed to load stock movement daily chart', e);
+      }
+
+      const labels = data.map(d => {
+        const parts = String(d.date || '').split('-');
+        if (parts.length === 3) {
+          const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          return `${monthNames[Number(parts[1])]} ${Number(parts[2])}`;
+        }
+        return d.date;
+      });
+      const inVals = data.map(d => Number(d.stockIn || 0));
+      const outVals = data.map(d => Number(d.stockOut || 0));
+
+      const ctx = canvas.getContext('2d');
+      state.chartInstances['stock-in-out'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Factory Stock In (Intake)',
+              data: inVals,
+              backgroundColor: '#059669',
+              borderRadius: 6,
+              barPercentage: 0.7,
+              categoryPercentage: 0.8
+            },
+            {
+              label: 'Dispatched Agent Sales (Stock Out)',
+              data: outVals,
+              backgroundColor: '#714B67',
+              borderRadius: 6,
+              barPercentage: 0.7,
+              categoryPercentage: 0.8
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } } },
+            tooltip: {
+              callbacks: {
+                label: (c) => `${c.dataset.label}: ${c.parsed.y.toLocaleString('en-US')} units`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#F1F5F9' },
+              ticks: { font: { size: 11 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 10 }, maxRotation: 45 }
+            }
+          }
+        }
+      });
+    }
+
+    // ── Agent Subtab Switching ──
+    function switchAgentSubtab(subtab) {
+      state.activeAgentSubtab = subtab;
+      ['sales', 'debts', 'stockin'].forEach(name => {
+        const sec = document.getElementById(`agent-section-${name}`);
+        if (sec) sec.classList.toggle('hidden', name !== subtab);
+        const btn = document.getElementById(`agent-subtab-${name}`);
+        if (btn) {
+          if (name === subtab) {
+            btn.className = 'agent-subtab px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-odoo-teal text-white shadow-xs transition';
+          } else {
+            btn.className = 'agent-subtab px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition';
+          }
+        }
+      });
+      if (subtab === 'debts') renderAgentDebts();
+      if (subtab === 'stockin') {
+        const sel = document.getElementById('agent-stockin-sku');
+        if (sel) {
+          sel.innerHTML = '';
+          getVariants().forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.sku;
+            opt.textContent = `[${v.sku}] ${v.productLine} — ${v.variantLabel} (Current: ${v.onHand})`;
+            sel.appendChild(opt);
+          });
+        }
+      }
+    }
+
+    // ── Agent Customer Debts ──
+    function renderAgentDebts() {
+      const tbody = document.getElementById('agent-debts-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const agentName = getActiveAgentName();
+      let creditSales = state.sales.filter(s =>
+        (s.paymentMethod && s.paymentMethod.toUpperCase() === 'CREDIT') && !s.creditCleared
+      );
+      if (state.session?.role === 'AGENT') {
+        creditSales = creditSales.filter(s => s.agentName === state.session.fullName || s.agent === state.session.fullName);
+      } else if (agentName) {
+        creditSales = creditSales.filter(s => s.agentName === agentName || s.agent === agentName);
+      }
+
+      let totalRemaining = 0;
+      creditSales.forEach(s => {
+        const qty = Number(s.quantity || s.qty || 0);
+        const unitSell = Number(s.unitSellPrice || s.unitSell || 0);
+        const total = qty * unitSell;
+        const paid = Number(s.amountPaid || 0);
+        totalRemaining += Math.max(0, total - paid);
+      });
+
+      const kpiRemEl = document.getElementById('agent-debt-kpi-remaining');
+      const listCountEl = document.getElementById('agent-debt-list-count');
+      const badgeEl = document.getElementById('agent-debts-count-badge');
+      if (kpiRemEl) kpiRemEl.textContent = fmt(totalRemaining);
+      if (listCountEl) listCountEl.textContent = `${creditSales.length} Invoices`;
+      if (badgeEl) badgeEl.textContent = creditSales.length;
+
+      if (creditSales.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">No outstanding customer debts assigned.</td></tr>';
+        return;
+      }
+
+      creditSales.forEach(s => {
+        const qty = Number(s.quantity || s.qty || 0);
+        const unitSell = Number(s.unitSellPrice || s.unitSell || 0);
+        const totalAmount = qty * unitSell;
+        const paidAmount = Number(s.amountPaid || 0);
+        const remainingDue = Math.max(0, totalAmount - paidAmount);
+        const percent = totalAmount > 0 ? Math.min(100, Math.round((paidAmount / totalAmount) * 100)) : 0;
+
+        const variantSku = s.variant?.sku || s.sku || s.skuSnapshot || '';
+        const variantLabel = s.variant ? `${s.variant.productLine} — ${s.variant.variantLabel}` : (s.productName || s.productLineSnapshot || '');
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+        tr.innerHTML = `
+          <td class="py-2.5 px-4 font-semibold text-slate-900">
+            <div>${s.customerName || 'Customer'}</div>
+            <div class="text-[10px] text-slate-400 font-mono">Invoice #${s.id}</div>
+          </td>
+          <td class="py-2.5 px-4">
+            <div class="font-mono text-xs text-odoo-teal font-semibold">${s.customerPhone || '—'}</div>
+            <div class="text-[11px] text-slate-500">${s.customerArea || '—'}</div>
+          </td>
+          <td class="py-2.5 px-4">
+            <span class="font-mono font-semibold text-odoo-plum">${variantSku}</span> × <strong>${qty}</strong>
+            <div class="text-[11px] text-slate-500 truncate max-w-[140px]">${variantLabel}</div>
+          </td>
+          <td class="py-2.5 px-4 text-right font-mono font-semibold text-slate-700">${fmt(totalAmount)}</td>
+          <td class="py-2.5 px-4 text-right font-mono font-semibold text-emerald-700">${fmt(paidAmount)}</td>
+          <td class="py-2.5 px-4 text-right font-mono font-bold text-amber-900">${fmt(remainingDue)}</td>
+          <td class="py-2.5 px-4">
+            <div class="space-y-1">
+              <span class="text-[10px] font-semibold text-blue-900">${percent}%</span>
+              <div class="w-20 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${percent}%"></div>
+              </div>
+            </div>
+          </td>
+          <td class="py-2.5 px-4 text-right">
+            <div class="inline-flex items-center gap-1.5">
+              <button type="button" class="btn-pay-agent-debt px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs transition" data-id="${s.id}">+ Collect</button>
+              <button type="button" class="btn-view-agent-history px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-medium transition" data-id="${s.id}">📜 History</button>
+            </div>
+          </td>
+        `;
+
+        tr.querySelector('.btn-pay-agent-debt').addEventListener('click', () => openPayCreditModal(s));
+        tr.querySelector('.btn-view-agent-history').addEventListener('click', () => openInstallmentHistoryModal(s.id));
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ── Installment History Modal ──
+    async function openInstallmentHistoryModal(saleId) {
+      const sale = state.sales.find(s => s.id === saleId);
+      if (!sale) return;
+
+      const qty = Number(sale.quantity || sale.qty || 0);
+      const unitSell = Number(sale.unitSellPrice || sale.unitSell || 0);
+      const totalAmount = qty * unitSell;
+      const paidAmount = sale.creditCleared ? totalAmount : Number(sale.amountPaid || 0);
+      const remainingDue = Math.max(0, totalAmount - paidAmount);
+
+      document.getElementById('history-summary-invoiced').textContent = fmt(totalAmount);
+      document.getElementById('history-summary-paid').textContent = fmt(paidAmount);
+      document.getElementById('history-summary-due').textContent = fmt(remainingDue);
+
+      const tbody = document.getElementById('history-modal-tbody');
+      tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-400">Loading repayment history...</td></tr>';
+      openModal('modal-installment-history');
+
+      try {
+        const installments = await API.installments(saleId);
+        tbody.innerHTML = '';
+        if (installments.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-400">No installments recorded yet. Invoice remains unpaid.</td></tr>';
+          return;
+        }
+
+        installments.forEach(inst => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+
+          const isMobile = inst.paymentMethod === 'MOBILE_BANKING';
+          const methodBadge = isMobile
+            ? '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-100 text-sky-800">Mobile Banking</span>'
+            : '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">Cash</span>';
+
+          let slipBtn = '<span class="text-slate-400 text-[10px]">—</span>';
+          if (inst.screenshotPath) {
+            slipBtn = `<button type="button" class="btn-view-inst-slip px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-50 text-sky-800 border border-sky-300 hover:bg-sky-100 transition">🧾 Slip</button>`;
+          }
+
+          const dateStr = inst.paidAt ? inst.paidAt.replace('T', ' ').slice(0, 16) : '';
+          tr.innerHTML = `
+            <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${dateStr}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">${fmt(inst.amount)}</td>
+            <td class="py-2.5 px-3">${methodBadge}</td>
+            <td class="py-2.5 px-3 text-slate-700">${inst.recordedBy || '—'}</td>
+            <td class="py-2.5 px-3 text-slate-600">${inst.note || '—'}</td>
+            <td class="py-2.5 px-3 text-right font-mono text-amber-900">${fmt(inst.remainingBalanceAfter)}</td>
+            <td class="py-2.5 px-3 text-center">${slipBtn}</td>
+          `;
+
+          tr.querySelector('.btn-view-inst-slip')?.addEventListener('click', () => {
+            openReceiptModal({
+              paymentScreenshotPath: inst.screenshotPath,
+              customerName: sale.customerName,
+              quantity: 1,
+              unitSellPrice: inst.amount,
+              paymentRef: inst.note,
+              soldAt: inst.paidAt,
+              agentName: inst.recordedBy,
+              productName: `Debt Installment for Invoice #${sale.id}`
+            });
+          });
+
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-500">Error loading installments: ${err.message}</td></tr>`;
+      }
+    }
+
+    // ── Finance View ──
+    async function renderFinanceView() {
+      const agentSel = document.getElementById('fin-filter-agent');
+      if (agentSel && agentSel.options.length <= 1) {
+        agentSel.innerHTML = '<option value="all">All Agents</option>';
+        state.agentList.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a.fullName;
+          opt.textContent = a.fullName;
+          agentSel.appendChild(opt);
+        });
+      }
+
+      let startDate = null;
+      let endDate = null;
+      const tf = state.financeFilter.timeframe;
+      const now = new Date();
+      if (tf === 'today') {
+        const ymd = now.toISOString().slice(0, 10);
+        startDate = ymd;
+        endDate = ymd;
+      } else if (tf === 'yesterday') {
+        const y = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const ymd = y.toISOString().slice(0, 10);
+        startDate = ymd;
+        endDate = ymd;
+      } else if (tf === '7d') {
+        const p = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        startDate = p.toISOString().slice(0, 10);
+        endDate = now.toISOString().slice(0, 10);
+      } else if (tf === 'month') {
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        startDate = firstDay.toISOString().slice(0, 10);
+        endDate = now.toISOString().slice(0, 10);
+      }
+
+      try {
+        const report = await API.dailyCollections(startDate, endDate, state.financeFilter.agent, state.financeFilter.method);
+        document.getElementById('fin-kpi-total').textContent = fmt(report.totalCollected);
+        document.getElementById('fin-kpi-cash').textContent = fmt(report.cashCollected);
+        document.getElementById('fin-kpi-mobile').textContent = fmt(report.mobileBankingCollected);
+        document.getElementById('fin-kpi-debt-inst').textContent = fmt(report.debtInstallmentsCollected);
+        document.getElementById('fin-kpi-uncollected').textContent = fmt(report.uncollectedCredit);
+
+        const tbody = document.getElementById('fin-collections-tbody');
+        tbody.innerHTML = '';
+        const list = report.collections || [];
+        document.getElementById('fin-collections-count').textContent = `${list.length} Transactions`;
+
+        if (list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">No collections found matching filter criteria.</td></tr>';
+          return;
+        }
+
+        list.forEach(c => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+
+          const isDirect = c.type === 'DIRECT_SALE';
+          const typeBadge = isDirect
+            ? '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">Direct Sale</span>'
+            : '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-100 text-indigo-800">Debt Installment</span>';
+
+          const isMobile = c.paymentMethod === 'MOBILE_BANKING';
+          const methodBadge = isMobile
+            ? '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-100 text-sky-800">Mobile Banking</span>'
+            : '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">Cash Handover</span>';
+
+          let slipBtn = '<span class="text-slate-400 text-[10px]">—</span>';
+          if (c.screenshotPath) {
+            slipBtn = `<button type="button" class="btn-view-fin-slip px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-50 text-sky-800 border border-sky-300 hover:bg-sky-100 transition">🧾 View Slip</button>`;
+          }
+
+          const dateStr = c.timestamp ? c.timestamp.replace('T', ' ').slice(0, 16) : '';
+          tr.innerHTML = `
+            <td class="py-2.5 px-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">${dateStr}</td>
+            <td class="py-2.5 px-4">${typeBadge}</td>
+            <td class="py-2.5 px-4 font-medium text-slate-900">${c.customerName || '—'}</td>
+            <td class="py-2.5 px-4 text-slate-700">${c.agentName || '—'}</td>
+            <td class="py-2.5 px-4">${methodBadge}</td>
+            <td class="py-2.5 px-4 text-right font-mono font-bold text-emerald-800">${fmt(c.amount)}</td>
+            <td class="py-2.5 px-4 text-slate-600 truncate max-w-[150px]">${c.reference || '—'}</td>
+            <td class="py-2.5 px-4 text-center">${slipBtn}</td>
+          `;
+
+          tr.querySelector('.btn-view-fin-slip')?.addEventListener('click', () => {
+            openReceiptModal({
+              paymentScreenshotPath: c.screenshotPath,
+              customerName: c.customerName,
+              quantity: 1,
+              unitSellPrice: c.amount,
+              paymentRef: c.reference,
+              soldAt: c.timestamp,
+              agentName: c.agentName,
+              productName: c.type === 'DEBT_REPAYMENT' ? 'Debt Installment Settlement' : 'Direct Van Sale'
+            });
+          });
+
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        showToast('Error loading finance report: ' + err.message, true);
+      }
+    }
+
+    // ── Stock Movements View ──
+    async function renderStockMovementsView() {
+      let startDate = null;
+      let endDate = null;
+      const tf = state.movementsFilter.timeframe;
+      const now = new Date();
+      if (tf === 'today') {
+        const ymd = now.toISOString().slice(0, 10);
+        startDate = ymd;
+        endDate = ymd;
+      } else if (tf === '7d') {
+        const p = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        startDate = p.toISOString().slice(0, 10);
+        endDate = now.toISOString().slice(0, 10);
+      } else if (tf === '30d') {
+        const p = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        startDate = p.toISOString().slice(0, 10);
+        endDate = now.toISOString().slice(0, 10);
+      }
+
+      try {
+        const report = await API.stockMovementsReport(null, state.movementsFilter.type, state.movementsFilter.category, startDate, endDate);
+        document.getElementById('mov-kpi-in').textContent = `${num(report.totalIn)} Units`;
+        document.getElementById('mov-kpi-out').textContent = `${num(report.totalOut)} Units`;
+        document.getElementById('mov-kpi-balance').textContent = `${num(report.currentBalance)} Units`;
+
+        const tbody = document.getElementById('mov-table-body');
+        tbody.innerHTML = '';
+        let list = report.movements || [];
+
+        const q = (state.movementsFilter.search || '').trim().toLowerCase();
+        if (q) {
+          list = list.filter(m => (m.sku && m.sku.toLowerCase().includes(q)) || (m.productName && m.productName.toLowerCase().includes(q)) || (m.reference && m.reference.toLowerCase().includes(q)));
+        }
+
+        if (list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">No stock movements found matching filter criteria.</td></tr>';
+          return;
+        }
+
+        list.forEach(m => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+
+          const isOut = m.type === 'OUT';
+          const typeBadge = isOut
+            ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">OUT (Agent Sale)</span>'
+            : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">IN (Factory Intake)</span>';
+
+          const dateStr = m.timestamp ? m.timestamp.replace('T', ' ').slice(0, 16) : '';
+          const performedBy = m.performedBy ? m.performedBy : 'Admin HQ';
+
+          tr.innerHTML = `
+            <td class="py-2.5 px-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">${dateStr}</td>
+            <td class="py-2.5 px-4">${typeBadge}</td>
+            <td class="py-2.5 px-4"><span class="font-mono font-semibold text-odoo-plum">${m.sku}</span> &mdash; ${m.productName}</td>
+            <td class="py-2.5 px-4 text-right font-mono font-bold ${isOut ? 'text-amber-800' : 'text-emerald-700'}">${isOut ? '-' : '+'}${m.quantity}</td>
+            <td class="py-2.5 px-4 font-medium text-slate-800">${performedBy}</td>
+            <td class="py-2.5 px-4 text-slate-600">${m.warehouse || 'Main Warehouse'}</td>
+            <td class="py-2.5 px-4 text-slate-600">${m.reference || '—'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        showToast('Error loading stock movements: ' + err.message, true);
+      }
+    }
+
+    // ── Messages View ──
+    async function renderMessagesView() {
+      const isAdmin = state.session?.role === 'ADMIN';
+      const sidebar = document.getElementById('msg-admin-sidebar');
+      if (sidebar) sidebar.style.display = isAdmin ? '' : 'none';
+
+      if (isAdmin) {
+        let convs = [];
+        try {
+          convs = await API.conversations();
+        } catch (_) {}
+
+        const listEl = document.getElementById('msg-conversations-list');
+        listEl.innerHTML = '';
+
+        if (convs.length === 0) {
+          listEl.innerHTML = '<div class="p-6 text-center text-slate-400">No agents found.</div>';
+        } else {
+          if (!state.selectedConversation || !convs.some(c => c.username === state.selectedConversation)) {
+            state.selectedConversation = convs[0].username;
+          }
+
+          convs.forEach(c => {
+            const isSelected = c.username === state.selectedConversation;
+            const item = document.createElement('div');
+            item.className = `p-3 cursor-pointer transition flex items-center justify-between ${isSelected ? 'bg-odoo-plumLight text-odoo-plum font-semibold' : 'hover:bg-slate-100 text-slate-700'}`;
+
+            const initials = (c.fullName || c.username).split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase();
+            const unreadBadge = c.unreadCount > 0
+              ? `<span class="ml-1.5 px-1.5 py-0.2 bg-rose-500 text-white font-bold rounded-full text-[10px]">${c.unreadCount}</span>`
+              : '';
+
+            item.innerHTML = `
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="w-7 h-7 rounded-full bg-slate-300 text-slate-800 font-bold text-[11px] flex items-center justify-center shrink-0">${initials}</div>
+                <div class="truncate">
+                  <div class="text-xs font-semibold text-slate-900 truncate">${c.fullName}</div>
+                  <div class="text-[10px] text-slate-500 truncate">${c.routeName || 'No route'}</div>
+                </div>
+              </div>
+              <div class="shrink-0 text-right">${unreadBadge}</div>
+            `;
+
+            item.addEventListener('click', () => {
+              state.selectedConversation = c.username;
+              renderMessagesView();
+            });
+
+            listEl.appendChild(item);
+          });
+        }
+
+        const activeConv = convs.find(c => c.username === state.selectedConversation);
+        if (activeConv) {
+          document.getElementById('msg-thread-title').textContent = `${activeConv.fullName} (@${activeConv.username})`;
+          document.getElementById('msg-thread-subtitle').textContent = `Territory: ${activeConv.routeName || 'Unassigned'}`;
+          document.getElementById('msg-thread-avatar').textContent = (activeConv.fullName || 'A').slice(0, 2).toUpperCase();
+        }
+      } else {
+        document.getElementById('msg-thread-title').textContent = 'Headquarters Admin';
+        document.getElementById('msg-thread-subtitle').textContent = 'Warehouse stock & route coordination';
+        document.getElementById('msg-thread-avatar').textContent = 'HQ';
+      }
+
+      const targetWith = isAdmin ? state.selectedConversation : 'admin';
+      if (!targetWith) return;
+
+      try {
+        const msgs = await API.messageThread(targetWith);
+        await API.markMessagesRead(targetWith);
+        updateUnreadMessageBadge();
+
+        const stream = document.getElementById('msg-thread-stream');
+        stream.innerHTML = '';
+
+        if (msgs.length === 0) {
+          stream.innerHTML = '<div class="text-center text-slate-400 py-12">No messages in this conversation yet. Send a message below to coordinate.</div>';
+          return;
+        }
+
+        msgs.forEach(m => {
+          const isMe = m.senderUsername === state.session.username;
+          const bubbleWrapper = document.createElement('div');
+          bubbleWrapper.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+
+          const timeStr = m.sentAt ? m.sentAt.replace('T', ' ').slice(11, 16) : '';
+          const bubble = document.createElement('div');
+          bubble.className = isMe
+            ? 'max-w-[75%] bg-odoo-plum text-white rounded-2xl rounded-tr-xs px-3.5 py-2 text-xs shadow-xs'
+            : 'max-w-[75%] bg-slate-100 text-slate-800 rounded-2xl rounded-tl-xs px-3.5 py-2 text-xs shadow-xs border border-slate-200';
+
+          bubble.innerHTML = `
+            <div>${m.content}</div>
+            <div class="text-[9px] mt-1 text-right ${isMe ? 'text-white/70' : 'text-slate-400'}">${timeStr} ${isMe ? (m.read ? '✓✓' : '✓') : ''}</div>
+          `;
+          bubbleWrapper.appendChild(bubble);
+          stream.appendChild(bubbleWrapper);
+        });
+
+        stream.scrollTop = stream.scrollHeight;
+      } catch (err) {
+        console.error('Error fetching thread', err);
+      }
+    }
+
+    // ── Notifications & Badges ──
+    async function updateUnreadMessageBadge() {
+      try {
+        const count = await API.unreadMessagesCount();
+        state.unreadMsgCount = count;
+        const el = document.getElementById('nav-msg-count');
+        if (el) {
+          el.textContent = count;
+          el.classList.toggle('hidden', count <= 0);
+        }
+      } catch (_) {}
+    }
+
+    async function fetchNotifications() {
+      if (state.session?.role !== 'ADMIN') return;
+      try {
+        const list = await API.notifications();
+        state.notifications = list || [];
+        const unreadCount = state.notifications.filter(n => !n.read).length;
+        state.unreadNotifCount = unreadCount;
+
+        const countBadge = document.getElementById('header-notif-count');
+        if (countBadge) {
+          countBadge.textContent = unreadCount;
+          countBadge.classList.toggle('hidden', unreadCount <= 0);
+        }
+
+        const listEl = document.getElementById('notif-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+
+        if (state.notifications.length === 0) {
+          listEl.innerHTML = '<div class="py-6 text-center text-slate-400">No new activity alerts.</div>';
+          return;
+        }
+
+        const iconMap = {
+          SALE: '💰',
+          STOCK_IN: '📦',
+          STOCK_LOW: '⚠️',
+          STOCK_OUT: '🚨',
+          DEBT_PAYMENT: '💵',
+          MESSAGE: '💬'
+        };
+
+        state.notifications.forEach(n => {
+          const item = document.createElement('div');
+          item.className = `p-3 transition cursor-pointer flex items-start gap-2.5 ${n.read ? 'hover:bg-slate-50 text-slate-600' : 'bg-emerald-50/50 hover:bg-emerald-50 text-slate-900 font-medium'}`;
+
+          const icon = iconMap[n.type] || '🔔';
+          const timeStr = n.createdAt ? n.createdAt.replace('T', ' ').slice(11, 16) : '';
+
+          item.innerHTML = `
+            <span class="text-base shrink-0 mt-0.5">${icon}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-xs font-semibold text-slate-900">${n.title}</span>
+                <span class="text-[10px] text-slate-400 font-mono">${timeStr}</span>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-0.5 break-words">${n.message}</p>
+            </div>
+          `;
+
+          item.addEventListener('click', async () => {
+            if (!n.read) {
+              try {
+                await API.markNotificationRead(n.id);
+                n.read = true;
+                fetchNotifications();
+              } catch (_) {}
+            }
+            if (n.type === 'SALE' || n.type === 'DEBT_PAYMENT') switchView('finance');
+            if (n.type === 'STOCK_IN') switchView('stock-movements');
+            if (n.type === 'MESSAGE') switchView('messages');
+          });
+
+          listEl.appendChild(item);
+        });
+      } catch (_) {}
+    }
+
+    let notifSource = null;
+    function setupNotificationsSSE() {
+      if (state.session?.role !== 'ADMIN') return;
+      if (notifSource) {
+        try { notifSource.close(); } catch (_) {}
+        notifSource = null;
+      }
+      try {
+        notifSource = new EventSource('/api/notifications/stream');
+        notifSource.onmessage = (event) => {
+          try {
+            const notif = JSON.parse(event.data);
+            showToast(`${notif.title}: ${notif.message}`);
+            fetchNotifications();
+            if (notif.type === 'SALE' || notif.type === 'STOCK_IN' || notif.type === 'DEBT_PAYMENT') {
+              refreshAll();
+            }
+          } catch (_) {}
+        };
+        notifSource.onerror = () => {};
+      } catch (_) {}
     }
 
     // ── Agent View ──
@@ -1729,45 +3164,125 @@
 
     function renderDebtorsView() {
       const tbody = document.getElementById('debtors-tbody');
-      const filterMode = document.getElementById('debtor-filter-status').value;
+      const filterMode = document.getElementById('debtor-filter-status')?.value || 'unpaid';
       tbody.innerHTML = '';
-      const creditSales = state.sales.filter(s => s.paymentMethod === 'CREDIT' || s.paymentMethod === 'Credit');
-      const unpaidTotal = creditSales.filter(s => !s.creditCleared).reduce((acc, s) => acc + Number(s.quantity || s.qty || 0) * Number(s.unitSellPrice || s.unitSell || 0), 0);
-      document.getElementById('debtors-total-outstanding').textContent = fmt(unpaidTotal);
-      const displayed = filterMode === 'unpaid' ? creditSales.filter(s => !s.creditCleared) : creditSales;
+
+      const creditSales = state.sales.filter(s =>
+        (s.paymentMethod && s.paymentMethod.toUpperCase() === 'CREDIT')
+      );
+
+      const totalInvoiced = creditSales.reduce((acc, s) => {
+        const qty = Number(s.quantity || s.qty || 0);
+        const unitSell = Number(s.unitSellPrice || s.unitSell || 0);
+        return acc + (qty * unitSell);
+      }, 0);
+
+      const totalPaid = creditSales.reduce((acc, s) => {
+        const total = Number(s.quantity || s.qty || 0) * Number(s.unitSellPrice || s.unitSell || 0);
+        if (s.creditCleared) return acc + total;
+        const paid = Number(s.amountPaid || 0);
+        return acc + Math.min(total, paid);
+      }, 0);
+
+      const totalOutstanding = Math.max(0, totalInvoiced - totalPaid);
+
+      const elInvoiced = document.getElementById('debtors-total-invoiced');
+      const elPaid = document.getElementById('debtors-total-paid');
+      const elOutstanding = document.getElementById('debtors-total-outstanding');
+      if (elInvoiced) elInvoiced.textContent = fmt(totalInvoiced);
+      if (elPaid) elPaid.textContent = fmt(totalPaid);
+      if (elOutstanding) elOutstanding.textContent = fmt(totalOutstanding);
+
+      let displayed = creditSales;
+      if (filterMode === 'unpaid') {
+        displayed = creditSales.filter(s => !s.creditCleared);
+      } else if (filterMode === 'partial') {
+        displayed = creditSales.filter(s => !s.creditCleared && Number(s.amountPaid || 0) > 0);
+      } else if (filterMode === 'cleared') {
+        displayed = creditSales.filter(s => s.creditCleared);
+      }
+
       if (displayed.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">No outstanding credit balances!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400">No credit records matching filter criteria.</td></tr>`;
         return;
       }
+
       displayed.forEach(s => {
         const qty = Number(s.quantity || s.qty || 0);
         const unitSell = Number(s.unitSellPrice || s.unitSell || 0);
-        const amount = qty * unitSell;
-        const variantSku = s.variant?.sku || s.sku || '';
-        const variantLabel = s.variant ? `${s.variant.productLine} — ${s.variant.variantLabel}` : (s.productName || '');
+        const totalAmount = qty * unitSell;
+
+        let paidAmount = s.creditCleared ? totalAmount : Number(s.amountPaid || 0);
+        paidAmount = Math.min(totalAmount, Math.max(0, paidAmount));
+        const remainingDue = s.creditCleared ? 0 : Math.max(0, totalAmount - paidAmount);
+        const percent = totalAmount > 0 ? Math.min(100, Math.round((paidAmount / totalAmount) * 100)) : (s.creditCleared ? 100 : 0);
+
+        const variantSku = s.variant?.sku || s.sku || s.skuSnapshot || '';
+        const variantLabel = s.variant ? `${s.variant.productLine} — ${s.variant.variantLabel}` : (s.productName || s.productLineSnapshot || '');
         const soldAt = s.soldAt ? s.soldAt.replace('T', ' ').slice(0, 16) : (s.date || '');
         const agentName = (s.agentName || s.agent || '').split(' (')[0];
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-50 transition';
-        tr.innerHTML = `
-          <td class="py-3 px-4 font-semibold text-slate-900">${s.customerName || s.customer || ''}</td>
-          <td class="py-3 px-4"><div class="font-mono text-xs text-odoo-teal font-semibold">${s.customerPhone || s.phone || ''}</div><div class="text-[11px] text-slate-500">${s.customerArea || s.area || ''}</div></td>
-          <td class="py-3 px-4"><span class="font-mono font-semibold text-odoo-plum">${variantSku}</span> × <strong>${qty}</strong><div class="text-[11px] text-slate-500">${variantLabel}</div></td>
-          <td class="py-3 px-4 text-xs text-slate-700">${agentName}</td>
-          <td class="py-3 px-4 text-xs"><div class="font-mono text-[11px] text-slate-500">${soldAt}</div><div class="text-[11px] text-amber-800">${s.paymentRef || 'Credit terms'}</div></td>
-          <td class="py-3 px-4 text-right font-mono font-bold ${s.creditCleared ? 'text-slate-400 line-through' : 'text-amber-900'}">${fmt(amount)}</td>
-          <td class="py-3 px-4">${s.creditCleared ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">Cleared</span>' : '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">Unpaid</span>'}</td>
-          <td class="py-3 px-4 text-right">${s.creditCleared ? '<span class="text-xs text-slate-400">Settled</span>' : `<button type="button" class="btn-clear-debt px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition" data-id="${s.id}">Mark Cleared</button>`}</td>`;
-        const btn = tr.querySelector('.btn-clear-debt');
-        if (btn) {
-          btn.addEventListener('click', async () => {
-            try {
-              await API.clearCredit(s.id);
-              await refreshAll();
-              showToast(`Cleared credit of ${fmt(amount)} for ${s.customerName || s.customer}`);
-            } catch (e) { showToast(e.message, true); }
-          });
+
+        let statusBadge = '';
+        if (s.creditCleared || remainingDue <= 0) {
+          statusBadge = `<div class="space-y-1">
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>Fully Cleared
+            </span>
+            <div class="text-[10px] text-slate-400 font-mono">100% Settled</div>
+          </div>`;
+        } else if (paidAmount > 0) {
+          statusBadge = `<div class="space-y-1">
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-900 border border-blue-300">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>Partial (${percent}%)
+            </span>
+            <div class="w-24 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${percent}%"></div>
+            </div>
+          </div>`;
+        } else {
+          statusBadge = `<div class="space-y-1">
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Unpaid (0%)
+            </span>
+            <div class="w-24 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div class="bg-amber-500 h-1.5 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>`;
         }
+
+        let actionHtml = `<div class="inline-flex items-center justify-center w-full">
+          <button type="button" class="btn-view-debtor-history px-2.5 py-1 rounded-lg bg-odoo-tealLight text-odoo-teal hover:bg-odoo-teal hover:text-white text-xs font-semibold transition border border-teal-200" data-id="${s.id}">
+            📜 View History
+          </button>
+        </div>`;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-semibold text-slate-900">
+            <div>${s.customerName || s.customer || ''}</div>
+            <div class="text-[11px] text-slate-400 font-mono">Invoice #${s.id}</div>
+          </td>
+          <td class="py-3 px-4">
+            <div class="font-mono text-xs text-odoo-teal font-semibold">${s.customerPhone || s.phone || 'No phone'}</div>
+            <div class="text-[11px] text-slate-500">${s.customerArea || s.area || 'Unspecified'}</div>
+          </td>
+          <td class="py-3 px-4">
+            <span class="font-mono font-semibold text-odoo-plum">${variantSku}</span> × <strong>${qty}</strong>
+            <div class="text-[11px] text-slate-500 truncate max-w-[160px]">${variantLabel}</div>
+          </td>
+          <td class="py-3 px-4 text-xs text-slate-700">${agentName}</td>
+          <td class="py-3 px-4 text-right font-mono font-semibold text-slate-700">${fmt(totalAmount)}</td>
+          <td class="py-3 px-4 text-right font-mono font-semibold text-emerald-700">${fmt(paidAmount)}</td>
+          <td class="py-3 px-4 text-right font-mono font-bold ${s.creditCleared ? 'text-slate-400 line-through' : 'text-amber-900'}">${fmt(remainingDue)}</td>
+          <td class="py-3 px-4">${statusBadge}</td>
+          <td class="py-3 px-4 text-center">${actionHtml}</td>
+        `;
+
+        tr.querySelector('.btn-view-debtor-history')?.addEventListener('click', () => {
+          openInstallmentHistoryModal(s.id);
+        });
+
         tbody.appendChild(tr);
       });
     }
@@ -1879,6 +3394,171 @@
       });
     }
 
+    // ── Agent Management View ──
+
+    function renderAgentsView() {
+      const activeCount = state.agentList.filter(a => a.active).length;
+      const inactiveCount = state.agentList.filter(a => !a.active).length;
+      const totalCount = state.agentList.length;
+
+      const elActive = document.getElementById('count-active-agents');
+      const elInactive = document.getElementById('count-inactive-agents');
+      const elTotal = document.getElementById('count-total-agents');
+      const elNav = document.getElementById('nav-agent-count');
+      if (elActive) elActive.textContent = activeCount;
+      if (elInactive) elInactive.textContent = inactiveCount;
+      if (elTotal) elTotal.textContent = totalCount;
+      if (elNav) elNav.textContent = activeCount;
+
+      let list = [...state.agentList];
+      if (state.agentFilter === 'active') {
+        list = list.filter(a => a.active);
+      } else if (state.agentFilter === 'inactive') {
+        list = list.filter(a => !a.active);
+      }
+
+      if (state.agentSearch) {
+        const q = state.agentSearch.toLowerCase().trim();
+        list = list.filter(a =>
+          (a.fullName && a.fullName.toLowerCase().includes(q)) ||
+          (a.username && a.username.toLowerCase().includes(q)) ||
+          (a.routeName && a.routeName.toLowerCase().includes(q))
+        );
+      }
+
+      const tbody = document.getElementById('agents-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">No agents match the current filter or search criteria.</td></tr>`;
+        return;
+      }
+
+      list.forEach(agent => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+
+        const statusBadge = agent.active
+          ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Active
+             </span>`
+          : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+               <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Inactive / Archived
+             </span>`;
+
+        const resetBadge = agent.passwordResetRequired
+          ? `<span class="ml-2 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-amber-100 text-amber-800 border border-amber-300" title="Agent must change password on next login">Reset Required</span>`
+          : '';
+
+        const hasSales = (agent.salesCount || 0) > 0;
+        const deleteBtnHtml = hasSales
+          ? `<button type="button" class="px-2 py-1 text-xs text-slate-400 cursor-not-allowed rounded border border-slate-200" title="Cannot delete: agent has ${agent.salesCount} historical sales. Deactivate instead.">Delete</button>`
+          : `<button type="button" class="btn-delete-agent px-2 py-1 text-xs text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded border border-rose-200 transition" data-id="${agent.id}" data-name="${agent.fullName}">Delete</button>`;
+
+        const toggleStatusBtn = agent.active
+          ? `<button type="button" class="btn-deactivate-agent px-2 py-1 text-xs text-amber-700 hover:text-amber-900 hover:bg-amber-50 rounded border border-amber-300 transition" data-id="${agent.id}" data-name="${agent.fullName}">Deactivate</button>`
+          : `<button type="button" class="btn-reactivate-agent px-2 py-1 text-xs text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 rounded border border-emerald-300 transition" data-id="${agent.id}" data-name="${agent.fullName}">Reactivate</button>`;
+
+        const canAddStockBadge = agent.canAddStock
+          ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">Authorized</span>`
+          : `<span class="px-2 py-0.5 rounded-full text-[10px] text-slate-500 bg-slate-100">Disabled</span>`;
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-semibold text-slate-800 flex items-center">
+            ${agent.fullName} ${resetBadge}
+          </td>
+          <td class="py-3 px-4 font-mono text-slate-600">${agent.username}</td>
+          <td class="py-3 px-4 text-slate-700">${agent.routeName ? agent.routeName : '<span class="text-slate-400 italic">Unassigned</span>'}</td>
+          <td class="py-3 px-4">${statusBadge}</td>
+          <td class="py-3 px-4 text-center">${canAddStockBadge}</td>
+          <td class="py-3 px-4 text-center font-mono font-bold text-slate-700">${agent.salesCount || 0}</td>
+          <td class="py-3 px-4 text-right">
+            <div class="inline-flex items-center gap-1.5">
+              <button type="button" class="btn-edit-agent px-2 py-1 text-xs text-odoo-teal hover:text-odoo-tealHover hover:bg-teal-50 rounded border border-teal-200 transition" data-id="${agent.id}">Edit</button>
+              ${toggleStatusBtn}
+              <button type="button" class="btn-reset-agent-pwd px-2 py-1 text-xs text-purple-700 hover:text-purple-900 hover:bg-purple-50 rounded border border-purple-200 transition" data-id="${agent.id}" data-name="${agent.fullName}">Reset Pwd</button>
+              ${deleteBtnHtml}
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Attach row event listeners
+      tbody.querySelectorAll('.btn-edit-agent').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.getAttribute('data-id'));
+          const ag = state.agentList.find(a => a.id === id);
+          if (!ag) return;
+          document.getElementById('edit-agent-id').value = ag.id;
+          document.getElementById('edit-agent-username').value = ag.username;
+          document.getElementById('edit-agent-fullname').value = ag.fullName;
+          document.getElementById('edit-agent-route').value = ag.routeName || '';
+          document.getElementById('edit-agent-can-add-stock').checked = Boolean(ag.canAddStock);
+          document.getElementById('edit-agent-error').classList.add('hidden');
+          openModal('modal-edit-agent');
+        });
+      });
+
+      tbody.querySelectorAll('.btn-deactivate-agent').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = Number(btn.getAttribute('data-id'));
+          const name = btn.getAttribute('data-name');
+          if (!confirm(`Are you sure you want to deactivate agent "${name}"? They will immediately lose access to log into the application.`)) return;
+          try {
+            await API.deactivateAgent(id);
+            showToast(`Agent "${name}" deactivated`);
+            state.agentList = await API.agents();
+            populateAgentDropdown();
+            renderAgentsView();
+          } catch (e) {
+            showToast('Error deactivating agent: ' + e.message, true);
+          }
+        });
+      });
+
+      tbody.querySelectorAll('.btn-reactivate-agent').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = Number(btn.getAttribute('data-id'));
+          const name = btn.getAttribute('data-name');
+          try {
+            await API.reactivateAgent(id);
+            showToast(`Agent "${name}" reactivated successfully`);
+            state.agentList = await API.agents();
+            populateAgentDropdown();
+            renderAgentsView();
+          } catch (e) {
+            showToast('Error reactivating agent: ' + e.message, true);
+          }
+        });
+      });
+
+      tbody.querySelectorAll('.btn-reset-agent-pwd').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.getAttribute('data-id'));
+          const name = btn.getAttribute('data-name');
+          document.getElementById('reset-agent-id').value = id;
+          document.getElementById('reset-agent-display-name').textContent = name;
+          document.getElementById('reset-agent-new-password').value = '';
+          document.getElementById('reset-agent-force-change').checked = true;
+          document.getElementById('reset-agent-pwd-error').classList.add('hidden');
+          openModal('modal-reset-agent-pwd');
+        });
+      });
+
+      tbody.querySelectorAll('.btn-delete-agent').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.getAttribute('data-id'));
+          const name = btn.getAttribute('data-name');
+          document.getElementById('delete-agent-id').value = id;
+          document.getElementById('delete-agent-warning-text').innerHTML = `Are you sure you want to permanently delete agent <strong>${name}</strong>? This action cannot be undone.`;
+          document.getElementById('delete-agent-error').classList.add('hidden');
+          openModal('modal-confirm-delete-agent');
+        });
+      });
+    }
+
     // ── Modal helpers ──
 
     function openModal(id) {
@@ -1926,6 +3606,36 @@
       document.getElementById('receipt-modal-product').textContent = `${sale.variant?.sku || sale.sku || sale.skuSnapshot || ''} (${vName}) × ${sale.quantity || sale.qty}`;
 
       openModal('modal-receipt-preview');
+    }
+
+    function openPayCreditModal(sale) {
+      const qty = Number(sale.quantity || sale.qty || 0);
+      const unitSell = Number(sale.unitSellPrice || sale.unitSell || 0);
+      const totalAmount = qty * unitSell;
+      const paidAmount = Number(sale.amountPaid || 0);
+      const remainingDue = Math.max(0, totalAmount - paidAmount);
+
+      document.getElementById('pay-credit-sale-id').value = sale.id;
+      document.getElementById('pay-credit-customer-name').textContent = sale.customerName || sale.customer || 'Customer';
+      const vName = sale.variant ? `${sale.variant.productLine} — ${sale.variant.variantLabel}` : (sale.productName || sale.productLineSnapshot || 'Item');
+      document.getElementById('pay-credit-product-label').textContent = `${sale.variant?.sku || sale.sku || sale.skuSnapshot || ''} (${vName}) × ${qty}`;
+      document.getElementById('pay-credit-total-amount').textContent = fmt(totalAmount);
+      document.getElementById('pay-credit-already-paid').textContent = fmt(paidAmount);
+      document.getElementById('pay-credit-remaining-due').textContent = fmt(remainingDue);
+
+      const amountInput = document.getElementById('pay-credit-amount');
+      amountInput.value = '';
+      amountInput.max = remainingDue;
+      amountInput.placeholder = `Max: ${remainingDue}`;
+
+      document.getElementById('pay-credit-note').value = '';
+      document.getElementById('pay-credit-error').classList.add('hidden');
+
+      document.getElementById('btn-pay-credit-full-amount').onclick = () => {
+        amountInput.value = remainingDue;
+      };
+
+      openModal('modal-pay-credit');
     }
 
     let activeAttachSaleId = null;
@@ -2225,6 +3935,7 @@
           password:  document.getElementById('agent-password').value.trim(),
           fullName:  document.getElementById('agent-fullname').value.trim(),
           routeName: document.getElementById('agent-route').value.trim(),
+          canAddStock: String(document.getElementById('agent-can-add-stock')?.checked || false),
         };
         try {
           await API.createAgent(data);
@@ -2266,6 +3977,317 @@
         } catch (err) {
           errEl.textContent = err.message;
           errEl.classList.remove('hidden');
+        }
+      });
+
+      // ── Agent Management Controls & Modals ──
+      const btnAgentsAddNew = document.getElementById('btn-agents-add-new');
+      if (btnAgentsAddNew) {
+        btnAgentsAddNew.addEventListener('click', () => {
+          document.getElementById('create-agent-error').classList.add('hidden');
+          openModal('modal-create-agent');
+        });
+      }
+
+      document.querySelectorAll('.agent-filter-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.agentFilter = btn.getAttribute('data-filter');
+          document.querySelectorAll('.agent-filter-pill').forEach(b => {
+            const isActive = b.getAttribute('data-filter') === state.agentFilter;
+            b.className = isActive
+              ? 'agent-filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-odoo-plum text-white transition'
+              : 'agent-filter-pill px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition';
+          });
+          renderAgentsView();
+        });
+      });
+
+      const agentsSearchInput = document.getElementById('agents-search-input');
+      if (agentsSearchInput) {
+        agentsSearchInput.addEventListener('input', e => {
+          state.agentSearch = e.target.value;
+          renderAgentsView();
+        });
+      }
+
+      // Edit Agent Modal
+      const btnCloseEditAgent = document.getElementById('btn-close-edit-agent');
+      if (btnCloseEditAgent) btnCloseEditAgent.addEventListener('click', () => closeModal('modal-edit-agent'));
+      const btnCancelEditAgent = document.getElementById('btn-cancel-edit-agent');
+      if (btnCancelEditAgent) btnCancelEditAgent.addEventListener('click', () => closeModal('modal-edit-agent'));
+      const formEditAgent = document.getElementById('form-edit-agent');
+      if (formEditAgent) {
+        formEditAgent.addEventListener('submit', async e => {
+          e.preventDefault();
+          const errEl = document.getElementById('edit-agent-error');
+          errEl.classList.add('hidden');
+          const id = document.getElementById('edit-agent-id').value;
+          const fullName = document.getElementById('edit-agent-fullname').value.trim();
+          const routeName = document.getElementById('edit-agent-route').value.trim();
+          const canAddStock = String(document.getElementById('edit-agent-can-add-stock')?.checked || false);
+          try {
+            await API.updateAgent(id, { fullName, routeName, canAddStock });
+            state.agentList = await API.agents();
+            populateAgentDropdown();
+            renderAgentsView();
+            closeModal('modal-edit-agent');
+            showToast('Agent details updated successfully');
+          } catch (err) {
+            errEl.textContent = err.message;
+            errEl.classList.remove('hidden');
+          }
+        });
+      }
+
+      // Reset Agent Password Modal
+      const btnCloseResetAgentPwd = document.getElementById('btn-close-reset-agent-pwd');
+      if (btnCloseResetAgentPwd) btnCloseResetAgentPwd.addEventListener('click', () => closeModal('modal-reset-agent-pwd'));
+      const btnCancelResetAgentPwd = document.getElementById('btn-cancel-reset-agent-pwd');
+      if (btnCancelResetAgentPwd) btnCancelResetAgentPwd.addEventListener('click', () => closeModal('modal-reset-agent-pwd'));
+      const formResetAgentPwd = document.getElementById('form-reset-agent-pwd');
+      if (formResetAgentPwd) {
+        formResetAgentPwd.addEventListener('submit', async e => {
+          e.preventDefault();
+          const errEl = document.getElementById('reset-agent-pwd-error');
+          errEl.classList.add('hidden');
+          const id = document.getElementById('reset-agent-id').value;
+          const newPassword = document.getElementById('reset-agent-new-password').value.trim();
+          const forceChange = document.getElementById('reset-agent-force-change').checked;
+          try {
+            await API.resetAgentPassword(id, newPassword, forceChange);
+            state.agentList = await API.agents();
+            renderAgentsView();
+            closeModal('modal-reset-agent-pwd');
+            showToast('Temporary password set successfully');
+          } catch (err) {
+            errEl.textContent = err.message;
+            errEl.classList.remove('hidden');
+          }
+        });
+      }
+
+      // Confirm Delete Agent Modal
+      const btnCloseConfirmDelete = document.getElementById('btn-close-confirm-delete-agent');
+      if (btnCloseConfirmDelete) btnCloseConfirmDelete.addEventListener('click', () => closeModal('modal-confirm-delete-agent'));
+      const btnCancelDelete = document.getElementById('btn-cancel-delete-agent');
+      if (btnCancelDelete) btnCancelDelete.addEventListener('click', () => closeModal('modal-confirm-delete-agent'));
+      const btnExecuteDelete = document.getElementById('btn-execute-delete-agent');
+      if (btnExecuteDelete) {
+        btnExecuteDelete.addEventListener('click', async () => {
+          const errEl = document.getElementById('delete-agent-error');
+          errEl.classList.add('hidden');
+          const id = document.getElementById('delete-agent-id').value;
+          try {
+            await API.deleteAgent(id);
+            state.agentList = await API.agents();
+            populateAgentDropdown();
+            renderAgentsView();
+            closeModal('modal-confirm-delete-agent');
+            showToast('Agent account deleted successfully');
+          } catch (err) {
+            errEl.textContent = err.message;
+            errEl.classList.remove('hidden');
+          }
+        });
+      }
+
+      // Debtor Filter Dropdown
+      const debtorFilter = document.getElementById('debtor-filter-status');
+      if (debtorFilter) {
+        debtorFilter.addEventListener('change', () => renderDebtorsView());
+      }
+
+      // Record Installment Modal
+      const btnClosePayCredit = document.getElementById('btn-close-pay-credit');
+      if (btnClosePayCredit) btnClosePayCredit.addEventListener('click', () => closeModal('modal-pay-credit'));
+      const btnCancelPayCredit = document.getElementById('btn-cancel-pay-credit');
+      if (btnCancelPayCredit) btnCancelPayCredit.addEventListener('click', () => closeModal('modal-pay-credit'));
+      const formPayCredit = document.getElementById('form-pay-credit');
+      if (formPayCredit) {
+        formPayCredit.addEventListener('submit', async e => {
+          e.preventDefault();
+          const errEl = document.getElementById('pay-credit-error');
+          errEl.classList.add('hidden');
+          const saleId = Number(document.getElementById('pay-credit-sale-id').value);
+          const amount = Number(document.getElementById('pay-credit-amount').value);
+          const method = document.getElementById('pay-credit-method').value;
+          const note = document.getElementById('pay-credit-note').value.trim();
+          const screenshotPath = document.getElementById('pay-credit-slip-path')?.value || null;
+
+          if (!amount || amount <= 0) {
+            errEl.textContent = 'Please enter a valid positive payment amount';
+            errEl.classList.remove('hidden');
+            return;
+          }
+
+          try {
+            await API.payCredit(saleId, amount, method, note, screenshotPath);
+            await refreshAll();
+            closeModal('modal-pay-credit');
+            document.getElementById('pay-credit-slip-path').value = '';
+            document.getElementById('pay-credit-slip-input').value = '';
+            document.getElementById('pay-credit-slip-status')?.classList.add('hidden');
+            showToast(`Recorded installment payment of ${fmt(amount)}`);
+          } catch (err) {
+            errEl.textContent = err.message;
+            errEl.classList.remove('hidden');
+          }
+        });
+      }
+
+      // ── Additional Event Wiring ──
+
+      // Agent Portal Subtabs
+      document.querySelectorAll('.agent-subtab').forEach(btn => {
+        btn.addEventListener('click', () => switchAgentSubtab(btn.getAttribute('data-subtab')));
+      });
+
+      // Agent Stock-In Form
+      const formAgentStockIn = document.getElementById('form-agent-stockin');
+      if (formAgentStockIn) {
+        formAgentStockIn.addEventListener('submit', async e => {
+          e.preventDefault();
+          const errEl = document.getElementById('agent-stockin-error');
+          errEl.classList.add('hidden');
+          const sku = document.getElementById('agent-stockin-sku').value;
+          const qty = Number(document.getElementById('agent-stockin-qty').value) || 0;
+          const note = document.getElementById('agent-stockin-note').value.trim() || 'Factory Intake logged by Agent';
+          try {
+            await API.stockIn(sku, qty, note);
+            await refreshAll();
+            formAgentStockIn.reset();
+            showToast(`Successfully received +${qty} units of ${sku} into Main Warehouse`);
+          } catch (err) {
+            errEl.textContent = err.message;
+            errEl.classList.remove('hidden');
+          }
+        });
+      }
+
+      // Finance view controls
+      document.querySelectorAll('.fin-time-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.financeFilter.timeframe = btn.getAttribute('data-time');
+          document.querySelectorAll('.fin-time-btn').forEach(b => {
+            const isAct = b.getAttribute('data-time') === state.financeFilter.timeframe;
+            b.className = isAct
+              ? 'fin-time-btn px-2.5 py-1 rounded-md transition bg-white text-emerald-800 font-semibold shadow-xs'
+              : 'fin-time-btn px-2.5 py-1 rounded-md transition text-slate-600 hover:text-slate-900';
+          });
+          renderFinanceView();
+        });
+      });
+      document.getElementById('fin-filter-agent')?.addEventListener('change', e => {
+        state.financeFilter.agent = e.target.value;
+        renderFinanceView();
+      });
+      document.getElementById('fin-filter-method')?.addEventListener('change', e => {
+        state.financeFilter.method = e.target.value;
+        renderFinanceView();
+      });
+
+      // Stock movements controls
+      document.getElementById('mov-filter-type')?.addEventListener('change', e => {
+        state.movementsFilter.type = e.target.value;
+        renderStockMovementsView();
+      });
+      document.getElementById('mov-filter-category')?.addEventListener('change', e => {
+        state.movementsFilter.category = e.target.value;
+        renderStockMovementsView();
+      });
+      document.getElementById('mov-filter-time')?.addEventListener('change', e => {
+        state.movementsFilter.timeframe = e.target.value;
+        renderStockMovementsView();
+      });
+      document.getElementById('mov-search-input')?.addEventListener('input', e => {
+        state.movementsFilter.search = e.target.value;
+        renderStockMovementsView();
+      });
+      document.getElementById('btn-mov-stock-in')?.addEventListener('click', () => openStockInModal());
+
+      // Dashboard daily stock-in vs stock-out chart
+      document.querySelectorAll('.btn-chart-days').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const days = Number(btn.getAttribute('data-days')) || 30;
+          state.chartDays = days;
+          document.querySelectorAll('.btn-chart-days').forEach(b => {
+            const isAct = Number(b.getAttribute('data-days')) === days;
+            b.className = isAct
+              ? 'btn-chart-days px-2.5 py-1 rounded-md transition bg-white text-indigo-700 font-semibold shadow-xs'
+              : 'btn-chart-days px-2.5 py-1 rounded-md transition text-slate-600 hover:text-slate-900';
+          });
+          renderStockMovementChart(state.chartDays, state.chartSku);
+        });
+      });
+      document.getElementById('chart-movements-sku-select')?.addEventListener('change', e => {
+        state.chartSku = e.target.value;
+        renderStockMovementChart(state.chartDays, state.chartSku);
+      });
+
+      // Messaging form & thread refresh
+      document.getElementById('form-send-message')?.addEventListener('submit', async e => {
+        e.preventDefault();
+        const input = document.getElementById('msg-input-content');
+        const content = input.value.trim();
+        if (!content) return;
+        const recipient = state.session?.role === 'ADMIN' ? state.selectedConversation : 'admin';
+        if (!recipient) {
+          showToast('Please select a recipient agent first', true);
+          return;
+        }
+        try {
+          await API.sendMessage(recipient, content);
+          input.value = '';
+          renderMessagesView();
+        } catch (err) {
+          showToast('Failed to send message: ' + err.message, true);
+        }
+      });
+      document.getElementById('btn-msg-refresh-thread')?.addEventListener('click', () => renderMessagesView());
+
+      // Header Notifications Bell & Dropdown
+      document.getElementById('header-notif-bell')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const dd = document.getElementById('notif-dropdown');
+        if (dd) dd.classList.toggle('hidden');
+      });
+      document.addEventListener('click', (e) => {
+        const dd = document.getElementById('notif-dropdown');
+        if (dd && !dd.contains(e.target) && !document.getElementById('header-notif-bell')?.contains(e.target)) {
+          dd.classList.add('hidden');
+        }
+      });
+      document.getElementById('btn-notif-mark-all-read')?.addEventListener('click', async () => {
+        try {
+          await API.markAllNotificationsRead();
+          fetchNotifications();
+          showToast('All activity notifications marked read');
+        } catch (_) {}
+      });
+
+      // Installment history modal close buttons
+      document.getElementById('btn-close-installment-history')?.addEventListener('click', () => closeModal('modal-installment-history'));
+      document.getElementById('btn-done-installment-history')?.addEventListener('click', () => closeModal('modal-installment-history'));
+
+      // Credit payment slip upload
+      document.getElementById('pay-credit-method')?.addEventListener('change', e => {
+        const sec = document.getElementById('pay-credit-slip-section');
+        if (sec) sec.classList.toggle('hidden', e.target.value !== 'MOBILE_BANKING');
+      });
+      document.getElementById('pay-credit-slip-input')?.addEventListener('change', async e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        try {
+          showToast('Uploading receipt screenshot…');
+          const res = await API.uploadScreenshot(f);
+          document.getElementById('pay-credit-slip-path').value = res.filename;
+          const status = document.getElementById('pay-credit-slip-status');
+          if (status) {
+            status.textContent = `✓ Uploaded: ${f.name}`;
+            status.classList.remove('hidden');
+          }
+        } catch (err) {
+          showToast(err.message, true);
         }
       });
     });
